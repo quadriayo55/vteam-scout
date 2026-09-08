@@ -316,6 +316,36 @@ export type Database = {
         }
         Relationships: []
       }
+      email_settings: {
+        Row: {
+          created_at: string
+          from_domain: string
+          from_local: string
+          from_name: string
+          reply_to: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          from_domain?: string
+          from_local?: string
+          from_name?: string
+          reply_to?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          from_domain?: string
+          from_local?: string
+          from_name?: string
+          reply_to?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       outreach_links: {
         Row: {
           channel: Database["public"]["Enums"]["outreach_channel"]
