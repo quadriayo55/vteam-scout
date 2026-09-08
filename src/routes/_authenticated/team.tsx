@@ -25,7 +25,7 @@ export const Route = createFileRoute("/_authenticated/team")({
       { title: "Members — Verunda Team Scoutier" },
       { name: "description", content: "Everyone in the workspace, their access level and their live outreach numbers." },
       { property: "og:title", content: "Members — Verunda Team Scoutier" },
-      { property: "og:description", content: "Manage access levels and see每 member's outreach numbers." },
+      { property: "og:description", content: "Manage access levels and each member's outreach numbers." },
     ],
   }),
   component: () => (
