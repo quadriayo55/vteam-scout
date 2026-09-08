@@ -552,7 +552,7 @@ function BulkOutreachPage() {
                   <Shuffle className="size-4 text-brand" /> Multi-message rotation
                 </h2>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Rotate up to five messages so consecutive emails don't carry the same subject and
+                  Rotate up to ten messages so consecutive emails don't carry the same subject and
                   body — this helps avoid repetitive-content flags at Gmail and Outlook.
                 </p>
               </div>
