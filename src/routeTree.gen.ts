@@ -17,6 +17,7 @@ import { Route as AuthenticatedActivityRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
 import { Route as AuthenticatedBulkOutreachRouteImport } from './routes/_authenticated/bulk-outreach'
 import { Route as AuthenticatedCampaignsRouteImport } from './routes/_authenticated/campaigns'
+import { Route as AuthenticatedConnectionsRouteImport } from './routes/_authenticated/connections'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedLeaderboardRouteImport } from './routes/_authenticated/leaderboard'
 import { Route as AuthenticatedOutreachRouteImport } from './routes/_authenticated/outreach'
@@ -66,6 +67,12 @@ const AuthenticatedCampaignsRoute = AuthenticatedCampaignsRouteImport.update({
   path: '/campaigns',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedConnectionsRoute =
+  AuthenticatedConnectionsRouteImport.update({
+    id: '/connections',
+    path: '/connections',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -116,6 +123,7 @@ export interface FileRoutesByFullPath {
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/bulk-outreach': typeof AuthenticatedBulkOutreachRoute
   '/campaigns': typeof AuthenticatedCampaignsRoute
+  '/connections': typeof AuthenticatedConnectionsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/outreach': typeof AuthenticatedOutreachRoute
@@ -133,6 +141,7 @@ export interface FileRoutesByTo {
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/bulk-outreach': typeof AuthenticatedBulkOutreachRoute
   '/campaigns': typeof AuthenticatedCampaignsRoute
+  '/connections': typeof AuthenticatedConnectionsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/outreach': typeof AuthenticatedOutreachRoute
@@ -152,6 +161,7 @@ export interface FileRoutesById {
   '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
   '/_authenticated/bulk-outreach': typeof AuthenticatedBulkOutreachRoute
   '/_authenticated/campaigns': typeof AuthenticatedCampaignsRoute
+  '/_authenticated/connections': typeof AuthenticatedConnectionsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/_authenticated/outreach': typeof AuthenticatedOutreachRoute
@@ -171,6 +181,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/bulk-outreach'
     | '/campaigns'
+    | '/connections'
     | '/dashboard'
     | '/leaderboard'
     | '/outreach'
@@ -188,6 +199,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/bulk-outreach'
     | '/campaigns'
+    | '/connections'
     | '/dashboard'
     | '/leaderboard'
     | '/outreach'
@@ -206,6 +218,7 @@ export interface FileRouteTypes {
     | '/_authenticated/analytics'
     | '/_authenticated/bulk-outreach'
     | '/_authenticated/campaigns'
+    | '/_authenticated/connections'
     | '/_authenticated/dashboard'
     | '/_authenticated/leaderboard'
     | '/_authenticated/outreach'
@@ -282,6 +295,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCampaignsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/connections': {
+      id: '/_authenticated/connections'
+      path: '/connections'
+      fullPath: '/connections'
+      preLoaderRoute: typeof AuthenticatedConnectionsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
@@ -346,6 +366,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAnalyticsRoute: typeof AuthenticatedAnalyticsRoute
   AuthenticatedBulkOutreachRoute: typeof AuthenticatedBulkOutreachRoute
   AuthenticatedCampaignsRoute: typeof AuthenticatedCampaignsRoute
+  AuthenticatedConnectionsRoute: typeof AuthenticatedConnectionsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedLeaderboardRoute: typeof AuthenticatedLeaderboardRoute
   AuthenticatedOutreachRoute: typeof AuthenticatedOutreachRoute
@@ -360,6 +381,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAnalyticsRoute: AuthenticatedAnalyticsRoute,
   AuthenticatedBulkOutreachRoute: AuthenticatedBulkOutreachRoute,
   AuthenticatedCampaignsRoute: AuthenticatedCampaignsRoute,
+  AuthenticatedConnectionsRoute: AuthenticatedConnectionsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedLeaderboardRoute: AuthenticatedLeaderboardRoute,
   AuthenticatedOutreachRoute: AuthenticatedOutreachRoute,
