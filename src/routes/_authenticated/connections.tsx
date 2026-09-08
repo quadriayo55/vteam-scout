@@ -62,8 +62,8 @@ function ConnectionsPage() {
   }, [saved.data, touched]);
 
   useEffect(() => {
-    if (!touched && !saved.data && profile.data?.full_name) {
-      setForm((current) => ({ ...current, from_local: toLocalPart(profile.data!.full_name ?? "") }));
+    if (!touched && !saved.data && profile.data?.display_name) {
+      setForm((current) => ({ ...current, from_local: toLocalPart(profile.data!.display_name ?? "") }));
     }
   }, [profile.data, saved.data, touched]);
 
@@ -110,7 +110,7 @@ function ConnectionsPage() {
           to: testTo,
           fromName: form.from_name,
           fromEmail: senderAddress(form),
-          replyTo: form.reply_to ?? undefined,
+          ...(form.reply_to?.trim() ? { replyTo: form.reply_to.trim() } : {}),
         },
       }),
     onSuccess: () => toast.success(`Test email sent to ${testTo}.`),
