@@ -334,7 +334,7 @@ function BulkOutreachPage() {
         });
         const { error: chunkError } = await supabase
           .from("bulk_send_recipients")
-          .upsert(chunk, { onConflict: "send_id,email", ignoreDuplicates: true });
+          .insert(chunk);
         if (chunkError) throw chunkError;
       }
       return send.id as string;
