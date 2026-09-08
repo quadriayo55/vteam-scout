@@ -928,13 +928,36 @@ function BulkOutreachPage() {
                     />
                   ))}
                 </div>
-                <Button
-                  size="sm"
-                  onClick={() => saveTemplate.mutate()}
-                  disabled={saveTemplate.isPending}
-                >
-                  Save current message as template
-                </Button>
+                <Input
+                  value={templateSubject}
+                  onChange={(event) => setTemplateSubject(event.target.value)}
+                  placeholder="Subject line — use {name} for the contact's name"
+                />
+                <Textarea
+                  value={templateBody}
+                  onChange={(event) => setTemplateBody(event.target.value)}
+                  rows={7}
+                  placeholder="Write the message for this template. Use {name} where the contact's name should appear."
+                />
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    size="sm"
+                    onClick={() => saveTemplate.mutate()}
+                    disabled={saveTemplate.isPending}
+                  >
+                    Save template
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setTemplateSubject(current.subject);
+                      setTemplateBody(current.body);
+                    }}
+                  >
+                    Copy from message {activeMessage + 1}
+                  </Button>
+                </div>
               </div>
             )}
 
