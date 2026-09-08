@@ -8,6 +8,9 @@ import {
   buildProfileUrl,
 } from "./outreach";
 
+/** Hard cap: a single upload may carry at most this many leads. */
+export const MAX_UPLOAD_LEADS = 100_000;
+
 export type ParsedRow = Record<string, string>;
 
 export type ParsedFile = {
@@ -30,6 +33,11 @@ export async function parseFile(file: File): Promise<ParsedFile> {
     raw: false,
   });
   const [headerRow = [], ...rest] = matrix;
+  if (rest.length > MAX_UPLOAD_LEADS) {
+    throw new Error(
+      `${file.name} has ${rest.length.toLocaleString()} rows — the limit is ${MAX_UPLOAD_LEADS.toLocaleString()} leads per upload. Split it into smaller files.`,
+    );
+  }
   const headers = headerRow.map((h) => String(h ?? "").trim());
   return {
     fileName: file.name,
