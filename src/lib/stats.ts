@@ -117,3 +117,60 @@ export function teamsQuery() {
     },
   });
 }
+
+export type CampaignOpenRow = {
+  campaign_id: string;
+  name: string;
+  starts_on: string;
+  ends_on: string | null;
+  is_active: boolean;
+  opens: number;
+  teams_joined: number;
+  generated: number;
+  clicked: number;
+};
+
+/** Opens, sign-ups and link counts for every campaign, newest first. */
+export function campaignOpensQuery() {
+  return queryOptions({
+    queryKey: ["campaign-opens"],
+    refetchInterval: 30000,
+    queryFn: async (): Promise<CampaignOpenRow[]> => {
+      const { data, error } = await supabase.rpc("campaign_opens_summary");
+      if (error) throw error;
+      return (data ?? []).map((row) => ({
+        ...(row as unknown as CampaignOpenRow),
+        opens: Number((row as { opens: number }).opens ?? 0),
+        teams_joined: Number((row as { teams_joined: number }).teams_joined ?? 0),
+        generated: Number((row as { generated: number }).generated ?? 0),
+        clicked: Number((row as { clicked: number }).clicked ?? 0),
+      }));
+    },
+  });
+}
+
+export type ActivityRow = {
+  kind: "team_joined" | "link_open" | "email_sent" | "email_failed";
+  happened_at: string;
+  title: string;
+  detail: string | null;
+  team_id: string | null;
+  team_name: string | null;
+  campaign_id: string | null;
+  campaign_name: string | null;
+};
+
+export function activityQuery(limit = 150, campaignId?: string | null) {
+  return queryOptions({
+    queryKey: ["activity", limit, campaignId ?? null],
+    refetchInterval: 20000,
+    queryFn: async (): Promise<ActivityRow[]> => {
+      const { data, error } = await supabase.rpc("activity_feed", {
+        _limit: limit,
+        ...(campaignId ? { _campaign_id: campaignId } : {}),
+      });
+      if (error) throw error;
+      return (data ?? []) as unknown as ActivityRow[];
+    },
+  });
+}

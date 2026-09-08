@@ -417,6 +417,87 @@ export type Database = {
           },
         ]
       }
+      prospects: {
+        Row: {
+          assigned_to: string | null
+          business_name: string
+          campaign_id: string | null
+          country: string | null
+          created_at: string
+          created_by: string | null
+          email: string | null
+          facebook: string | null
+          id: string
+          instagram: string | null
+          linkedin: string | null
+          notes: string | null
+          phone: string | null
+          score: number
+          stage: string
+          team_id: string | null
+          tiktok: string | null
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          business_name: string
+          campaign_id?: string | null
+          country?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          facebook?: string | null
+          id?: string
+          instagram?: string | null
+          linkedin?: string | null
+          notes?: string | null
+          phone?: string | null
+          score?: number
+          stage?: string
+          team_id?: string | null
+          tiktok?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          assigned_to?: string | null
+          business_name?: string
+          campaign_id?: string | null
+          country?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          facebook?: string | null
+          id?: string
+          instagram?: string | null
+          linkedin?: string | null
+          notes?: string | null
+          phone?: string | null
+          score?: number
+          stage?: string
+          team_id?: string | null
+          tiktok?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospects_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prospects_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       teams: {
         Row: {
           created_at: string
@@ -491,6 +572,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      activity_feed: {
+        Args: { _campaign_id?: string; _limit?: number }
+        Returns: {
+          campaign_id: string
+          campaign_name: string
+          detail: string
+          happened_at: string
+          kind: string
+          team_id: string
+          team_name: string
+          title: string
+        }[]
+      }
       campaign_engagement: {
         Args: { _campaign_id: string }
         Returns: {
@@ -503,6 +597,20 @@ export type Database = {
           target: number
           team_id: string
           team_name: string
+        }[]
+      }
+      campaign_opens_summary: {
+        Args: never
+        Returns: {
+          campaign_id: string
+          clicked: number
+          ends_on: string
+          generated: number
+          is_active: boolean
+          name: string
+          opens: number
+          starts_on: string
+          teams_joined: number
         }[]
       }
       campaign_progress: {
