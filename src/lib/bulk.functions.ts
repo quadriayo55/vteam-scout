@@ -308,8 +308,8 @@ export const sendDraftTest = createServerFn({ method: "POST" })
     const resendKey = process.env["RESEND_API_KEY"];
     if (!lovableKey || !resendKey) throw new Error("Email sending is not connected yet.");
 
-    const subject = inboxSubject(personalize(data.subject, data.name));
-    const text = personalize(data.body, data.name);
+    const subject = inboxSubject(personalize(data.subject, data.name, data.brand, data.domain));
+    const text = personalize(data.body, data.name, data.brand, data.domain);
 
 
     const response = await fetch(`${GATEWAY_URL}/emails`, {
