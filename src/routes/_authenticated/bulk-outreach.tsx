@@ -786,7 +786,9 @@ function BulkOutreachPage() {
               </div>
               <SpamHint level={bodySpam.level} hits={bodySpam.hits} />
               <p className="text-xs text-brand">
-                Personalisation on — <code>{"{name}"}</code> becomes each contact's name.
+                Personalisation on — <code>{"{name}"}</code> becomes the contact's name,{" "}
+                <code>{"{brand}"}</code> the brand or store name, and <code>{"{website}"}</code> the
+                store link from your file.
               </p>
             </div>
 
