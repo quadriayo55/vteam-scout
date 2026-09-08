@@ -65,7 +65,7 @@ function AuthenticatedLayout() {
   const queryClient = useQueryClient();
   const { user, loading } = useAuth();
   const profile = useProfile();
-  const roles = useRoles();
+  const permissions = usePermissions();
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -76,7 +76,7 @@ function AuthenticatedLayout() {
   useEffect(() => {
     if (!user || profile.isLoading || profile.data) return;
     const raw = window.localStorage.getItem("verunda_pending_profile");
-    const pending = raw ? (JSON.parse(raw) as { display_name?: string; team_id?: string }) : {};
+    const pending = raw ? (JSON.parse(raw) as { display_name?: string }) : {};
     supabase
       .from("profiles")
       .insert({
@@ -84,7 +84,6 @@ function AuthenticatedLayout() {
         email: user.email ?? "",
         display_name:
           pending.display_name?.trim() || (user.email ?? "").split("@")[0] || "Scout",
-        team_id: pending.team_id ?? null,
       })
       .then(() => {
         window.localStorage.removeItem("verunda_pending_profile");
@@ -102,11 +101,9 @@ function AuthenticatedLayout() {
   }
 
   const name = displayNameOf(profile.data, user.email);
-  const roleLabel = roles.isSuperAdmin
-    ? "Super Admin"
-    : roles.isTeamLeader
-      ? "Team Leader"
-      : "Member";
+  const roleLabel = permissions.roleLabel;
+  const nav = NAV.filter((item) => !item.need || permissions[item.need]);
+
 
   async function signOut() {
     await supabase.auth.signOut();
