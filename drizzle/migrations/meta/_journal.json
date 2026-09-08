@@ -36,6 +36,13 @@
       "when": 1788829343072,
       "tag": "0004_create_campaigns",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1788829602352,
+      "tag": "0005_create_campaign_invites",
+      "breakpoints": true
     }
   ]
 }

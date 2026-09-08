@@ -14,6 +14,109 @@ export type Database = {
   }
   public: {
     Tables: {
+      campaign_invite_clicks: {
+        Row: {
+          campaign_id: string
+          clicked_at: string
+          id: string
+          invite_id: string
+          referrer: string | null
+          team_id: string
+          user_agent: string | null
+        }
+        Insert: {
+          campaign_id: string
+          clicked_at?: string
+          id?: string
+          invite_id: string
+          referrer?: string | null
+          team_id: string
+          user_agent?: string | null
+        }
+        Update: {
+          campaign_id?: string
+          clicked_at?: string
+          id?: string
+          invite_id?: string
+          referrer?: string | null
+          team_id?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_invite_clicks_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_invite_clicks_invite_id_fkey"
+            columns: ["invite_id"]
+            isOneToOne: false
+            referencedRelation: "campaign_invites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_invite_clicks_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaign_invites: {
+        Row: {
+          campaign_id: string
+          clicks: number
+          code: string
+          created_at: string
+          created_by: string | null
+          id: string
+          label: string | null
+          last_clicked_at: string | null
+          team_id: string
+        }
+        Insert: {
+          campaign_id: string
+          clicks?: number
+          code: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          label?: string | null
+          last_clicked_at?: string | null
+          team_id: string
+        }
+        Update: {
+          campaign_id?: string
+          clicks?: number
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          label?: string | null
+          last_clicked_at?: string | null
+          team_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_invites_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_invites_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       campaign_teams: {
         Row: {
           assigned_by: string | null
@@ -264,6 +367,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      campaign_engagement: {
+        Args: { _campaign_id: string }
+        Returns: {
+          clicked: number
+          generated: number
+          invite_code: string
+          joined_at: string
+          last_open: string
+          link_opens: number
+          target: number
+          team_id: string
+          team_name: string
+        }[]
+      }
       campaign_progress: {
         Args: { _campaign_id: string }
         Returns: {
@@ -318,6 +435,16 @@ export type Database = {
         Returns: {
           clicked: number
           generated: number
+        }[]
+      }
+      record_invite_click: {
+        Args: { _code: string; _referrer?: string; _user_agent?: string }
+        Returns: {
+          campaign_id: string
+          campaign_name: string
+          clicks: number
+          team_id: string
+          team_name: string
         }[]
       }
     }
