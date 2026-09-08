@@ -82,7 +82,7 @@ export const sendBulkBatch = createServerFn({ method: "POST" })
     const take = Math.min(send.batch_size, capLeft);
     const { data: recipients, error: recipientError } = await supabase
       .from("bulk_send_recipients")
-      .select("id, email, contact_name")
+      .select("id, email, contact_name, variant")
       .eq("send_id", send.id)
       .eq("status", "pending")
       .order("created_at", { ascending: true })
@@ -94,16 +94,29 @@ export const sendBulkBatch = createServerFn({ method: "POST" })
       : send.from_email;
     const replyTo = send.reply_to?.trim() || "quadri@verunda.com";
 
+    const rawVariants = Array.isArray(send.variants) ? send.variants : [];
+    const variants = rawVariants
+      .map((item) => {
+        const record = (item ?? {}) as { subject?: unknown; body?: unknown };
+        return {
+          subject: String(record.subject ?? "").trim(),
+          body: String(record.body ?? "").trim(),
+        };
+      })
+      .filter((item) => item.subject || item.body);
+
     let sent = 0;
     let failed = 0;
     const errors: string[] = [];
 
     for (const recipient of recipients ?? []) {
-      const subject = personalize(send.subject, recipient.contact_name);
-      const text = personalize(send.body, recipient.contact_name);
+      const variant = variants[recipient.variant ?? 0];
+      const subject = personalize(variant?.subject || send.subject, recipient.contact_name);
+      const text = personalize(variant?.body || send.body, recipient.contact_name);
       const html = `<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6">${escapeHtml(
         text,
       ).replace(/\n/g, "<br />")}</div>`;
+
 
       try {
         const response = await fetch(`${GATEWAY_URL}/emails`, {
