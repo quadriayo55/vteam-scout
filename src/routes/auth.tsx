@@ -43,6 +43,9 @@ function AuthPage() {
   const [busy, setBusy] = useState(false);
   const teams = useQuery(teamsQuery());
 
+  // The Super Admin owns every team, so they don't join one at sign-up.
+  const isAdminEmail = email.trim().toLowerCase() === "admin@verunda.com";
+
   useEffect(() => {
     if (!loading && user) navigate({ to: "/dashboard", replace: true });
   }, [loading, user, navigate]);
@@ -62,7 +65,7 @@ function AuthPage() {
       }
 
       if (mode === "signup") {
-        if (!teamId) {
+        if (!isAdminEmail && !teamId) {
           toast.error("Pick the team you're joining.");
           return;
         }
@@ -89,7 +92,7 @@ function AuthPage() {
             id: data.user.id,
             email: email.trim(),
             display_name: name.trim() || email.trim().split("@")[0] || "Scout",
-            team_id: teamId,
+            team_id: teamId || null,
           });
           if (profileError) throw profileError;
           navigate({ to: "/dashboard", replace: true });
@@ -97,7 +100,7 @@ function AuthPage() {
         }
         window.localStorage.setItem(
           "verunda_pending_profile",
-          JSON.stringify({ display_name: name.trim(), team_id: teamId }),
+          JSON.stringify({ display_name: name.trim(), team_id: teamId || null }),
         );
         toast.success("Account created — confirm your email, then sign in.");
         setMode("signin");
@@ -126,12 +129,15 @@ function AuthPage() {
       <div className="panel w-full max-w-md p-6 sm:p-8">
         <h1 className="font-display text-2xl font-bold">
           {mode === "signin" && "Welcome back"}
-          {mode === "signup" && "Join your team"}
+          {mode === "signup" && (isAdminEmail ? "Super Admin setup" : "Join your team")}
           {mode === "forgot" && "Reset your password"}
         </h1>
         <p className="mt-1.5 text-sm text-muted-foreground">
           {mode === "signin" && "Sign in to your Scoutier workspace."}
-          {mode === "signup" && "Create an account and pick the team you belong to."}
+          {mode === "signup" &&
+            (isAdminEmail
+              ? "You oversee every team, so there's no team to pick."
+              : "Create an account and pick the team you belong to.")}
           {mode === "forgot" && "We'll email you a link to set a new password."}
         </p>
 
@@ -176,7 +182,7 @@ function AuthPage() {
             </div>
           )}
 
-          {mode === "signup" && (
+          {mode === "signup" && !isAdminEmail && (
             <div className="space-y-2">
               <Label>Team</Label>
               <Select value={teamId} onValueChange={setTeamId}>
