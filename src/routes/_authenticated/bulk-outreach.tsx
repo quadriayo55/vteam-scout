@@ -34,7 +34,7 @@ export const Route = createFileRoute("/_authenticated/bulk-outreach")({
       },
     ],
   }),
-  component: BulkOutreachPage;
+  component: BulkOutreachPage,
 });
 
 type Recipient = { email: string; contact_name: string | null; domain: string | null };

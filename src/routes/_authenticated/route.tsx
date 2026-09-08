@@ -19,6 +19,7 @@ import {
   LayoutDashboard,
   Link2,
   Megaphone,
+  Send,
   BarChart3,
   Trophy,
   Users,
@@ -36,6 +37,7 @@ export const Route = createFileRoute("/_authenticated")({
 const NAV = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/outreach", label: "Outreach Links", icon: Link2 },
+  { to: "/bulk-outreach", label: "Bulk Outreach", icon: Send },
   { to: "/campaigns", label: "Campaigns", icon: Megaphone },
   { to: "/team-links", label: "Team Links", icon: Link2 },
   { to: "/analytics", label: "Analytics", icon: BarChart3 },
