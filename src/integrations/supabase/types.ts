@@ -14,6 +14,84 @@ export type Database = {
   }
   public: {
     Tables: {
+      campaign_teams: {
+        Row: {
+          assigned_by: string | null
+          campaign_id: string
+          created_at: string
+          id: string
+          joined_at: string | null
+          target: number
+          team_id: string
+        }
+        Insert: {
+          assigned_by?: string | null
+          campaign_id: string
+          created_at?: string
+          id?: string
+          joined_at?: string | null
+          target?: number
+          team_id: string
+        }
+        Update: {
+          assigned_by?: string | null
+          campaign_id?: string
+          created_at?: string
+          id?: string
+          joined_at?: string | null
+          target?: number
+          team_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_teams_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_teams_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaigns: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          ends_on: string | null
+          id: string
+          is_active: boolean
+          name: string
+          starts_on: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          ends_on?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          starts_on?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          ends_on?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          starts_on?: string
+        }
+        Relationships: []
+      }
       outreach_links: {
         Row: {
           channel: Database["public"]["Enums"]["outreach_channel"]
@@ -186,6 +264,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      campaign_progress: {
+        Args: { _campaign_id: string }
+        Returns: {
+          clicked: number
+          generated: number
+          joined_at: string
+          target: number
+          team_id: string
+          team_name: string
+        }[]
+      }
       can_view_user: { Args: { _user_id: string }; Returns: boolean }
       has_role: {
         Args: {
