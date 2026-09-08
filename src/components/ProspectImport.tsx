@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { lookupSites, type SiteLookup } from "@/lib/prospect-lookup.functions";
+import { MAX_UPLOAD_LEADS } from "@/lib/parse";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -175,6 +176,12 @@ export function ProspectImport({
         toast.error("Couldn't find any leads in that file.");
         return;
       }
+      if (parsed.length > MAX_UPLOAD_LEADS) {
+        toast.error(
+          `That file has ${parsed.length.toLocaleString()} leads — the limit is ${MAX_UPLOAD_LEADS.toLocaleString()} per upload. Split it into smaller files.`,
+        );
+        return;
+      }
       setDrafts((prev) => [...prev, ...parsed]);
       toast.success(`${parsed.length} leads read from ${file.name}.`);
     } catch (error) {
@@ -229,6 +236,12 @@ export function ProspectImport({
       toast.error("Nothing to import yet.");
       return;
     }
+    if (drafts.length > MAX_UPLOAD_LEADS) {
+      toast.error(
+        `That's ${drafts.length.toLocaleString()} leads — the limit is ${MAX_UPLOAD_LEADS.toLocaleString()} per upload. Split it into smaller lists.`,
+      );
+      return;
+    }
     setSaving(true);
     try {
       const batchId =
@@ -270,7 +283,7 @@ export function ProspectImport({
         <h2 className="font-display text-lg font-bold">Import prospects</h2>
         <p className="mt-1 text-sm text-muted-foreground">
           Upload a lead file, or paste business websites and let Scoutier fill in the contact
-          details it can find.
+          details it can find. Up to {MAX_UPLOAD_LEADS.toLocaleString()} leads per upload.
         </p>
       </div>
 
