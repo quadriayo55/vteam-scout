@@ -4,8 +4,22 @@ import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, AlertTriangle } from "lucide-react";
 
+type LoaderResult = {
+  ok: boolean;
+  campaignName?: string | undefined;
+  teamName?: string | undefined;
+  clicks?: number | undefined;
+};
+
 export const Route = createFileRoute("/j/$code")({
-  loader: async ({ params }) => recordInviteClick({ data: { code: params.code } }),
+  loader: async ({ params }): Promise<LoaderResult> => {
+    try {
+      return await recordInviteClick({ data: { code: params.code } });
+    } catch (error) {
+      console.error(error);
+      return { ok: false };
+    }
+  },
   head: () => ({
     meta: [
       { title: "Campaign sign-up — Verunda Team Scoutier" },
@@ -24,22 +38,8 @@ export const Route = createFileRoute("/j/$code")({
     ],
   }),
   component: JoinPage,
-  errorComponent: () => (
-    <Shell>
-      <AlertTriangle className="size-8 text-brand" />
-      <h1 className="font-display text-xl font-bold">Something went wrong</h1>
-      <p className="text-sm text-muted-foreground">
-        We couldn't record that link just now. Please try opening it again.
-      </p>
-    </Shell>
-  ),
-  notFoundComponent: () => (
-    <Shell>
-      <AlertTriangle className="size-8 text-brand" />
-      <h1 className="font-display text-xl font-bold">Link not found</h1>
-      <p className="text-sm text-muted-foreground">This outreach link no longer exists.</p>
-    </Shell>
-  ),
+  errorComponent: JoinError,
+  notFoundComponent: JoinError,
 });
 
 function Shell({ children }: { children: React.ReactNode }) {
@@ -55,6 +55,19 @@ function Shell({ children }: { children: React.ReactNode }) {
     </main>
   );
 }
+
+function JoinError() {
+  return (
+    <Shell>
+      <AlertTriangle className="size-8 text-brand" />
+      <h1 className="font-display text-xl font-bold">Link not recognised</h1>
+      <p className="text-sm text-muted-foreground">
+        This outreach link is no longer active. Ask your team leader for a fresh one.
+      </p>
+    </Shell>
+  );
+}
+
 
 function JoinPage() {
   const result = Route.useLoaderData();
