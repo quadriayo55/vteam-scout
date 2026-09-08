@@ -50,6 +50,13 @@
       "when": 1788829885926,
       "tag": "0006_fix_record_invite_click",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1788829957182,
+      "tag": "0007_fix_record_invite_click_conflict",
+      "breakpoints": true
     }
   ]
 }
