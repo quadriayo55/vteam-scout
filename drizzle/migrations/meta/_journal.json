@@ -43,6 +43,13 @@
       "when": 1788829602352,
       "tag": "0005_create_campaign_invites",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1788829885926,
+      "tag": "0006_fix_record_invite_click",
+      "breakpoints": true
     }
   ]
 }
