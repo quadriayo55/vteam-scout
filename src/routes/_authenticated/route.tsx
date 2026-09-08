@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
   Link2,
+  Megaphone,
   BarChart3,
   Trophy,
   Users,
@@ -35,6 +36,7 @@ export const Route = createFileRoute("/_authenticated")({
 const NAV = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/outreach", label: "Outreach Links", icon: Link2 },
+  { to: "/campaigns", label: "Campaigns", icon: Megaphone },
   { to: "/analytics", label: "Analytics", icon: BarChart3 },
   { to: "/leaderboard", label: "Leaderboard", icon: Trophy },
   { to: "/team", label: "Team", icon: Users },
