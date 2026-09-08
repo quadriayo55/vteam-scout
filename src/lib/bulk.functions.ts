@@ -239,9 +239,6 @@ export const sendDraftTest = createServerFn({ method: "POST" })
 
     const subject = personalize(data.subject, data.name);
     const text = personalize(data.body, data.name);
-    const html = `<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6">${escapeHtml(
-      text,
-    ).replace(/\n/g, "<br />")}</div>`;
 
     const response = await fetch(`${GATEWAY_URL}/emails`, {
       method: "POST",
@@ -253,12 +250,16 @@ export const sendDraftTest = createServerFn({ method: "POST" })
       body: JSON.stringify({
         from: `${data.fromName} <${data.fromEmail}>`,
         to: [data.to],
-        subject: `[TEST] ${subject}`,
-        html,
+        // Same subject as the real send, so the test lands in the same tab.
+        subject,
         text,
         reply_to: data.replyTo,
+        headers: {
+          "X-Entity-Ref-ID": crypto.randomUUID(),
+        },
       }),
     });
+
 
     const bodyText = await response.text();
     if (!response.ok) {
