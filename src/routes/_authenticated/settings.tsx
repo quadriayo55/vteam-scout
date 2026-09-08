@@ -20,6 +20,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { TIME_ZONES, browserTimeZone } from "@/lib/tz";
 import { Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/settings")({
@@ -49,9 +57,13 @@ function SettingsPage() {
   const [uploading, setUploading] = useState(false);
   const [password, setPassword] = useState("");
   const [savingPassword, setSavingPassword] = useState(false);
+  const [zone, setZone] = useState(browserTimeZone());
 
   useEffect(() => {
-    if (profile.data) setName(profile.data.display_name);
+    if (profile.data) {
+      setName(profile.data.display_name);
+      if (profile.data.timezone) setZone(profile.data.timezone);
+    }
   }, [profile.data]);
 
   const teamName = teams.data?.find((team) => team.id === profile.data?.team_id)?.name ?? "No team";
@@ -64,7 +76,7 @@ function SettingsPage() {
     setSavingName(true);
     const { error } = await supabase
       .from("profiles")
-      .update({ display_name: name.trim() })
+      .update({ display_name: name.trim(), timezone: zone })
       .eq("id", user.id);
     setSavingName(false);
     if (error) {
@@ -170,6 +182,25 @@ function SettingsPage() {
         <div className="space-y-2">
           <Label htmlFor="displayName">Display name</Label>
           <Input id="displayName" value={name} onChange={(event) => setName(event.target.value)} />
+        </div>
+
+        <div className="space-y-2">
+          <Label>Timezone</Label>
+          <Select value={zone} onValueChange={setZone}>
+            <SelectTrigger>
+              <SelectValue placeholder="Pick your timezone" />
+            </SelectTrigger>
+            <SelectContent>
+              {[...new Set([browserTimeZone(), ...TIME_ZONES])].map((tz) => (
+                <SelectItem key={tz} value={tz}>
+                  {tz.replace("_", " ")}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground">
+            Your activity times are shown in this timezone.
+          </p>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">

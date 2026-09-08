@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth, useProfile, useRoles, displayNameOf } from "@/lib/auth";
 import { dailyQuery, totalsQuery } from "@/lib/stats";
 import { StatCard } from "@/components/StatCard";
+import { SmartAnalytics } from "@/components/SmartAnalytics";
 import { LiveIndicator } from "@/components/LiveIndicator";
 import { Button } from "@/components/ui/button";
 import { formatWatDay } from "@/lib/wat";
@@ -38,6 +39,7 @@ function DashboardPage() {
   const roles = useRoles();
   const totals = useQuery(totalsQuery({ userId: user?.id }, "all"));
   const daily = useQuery(dailyQuery({ userId: user?.id }, "7d"));
+  const today = useQuery(totalsQuery({ userId: user?.id }, "today"));
 
   const chartData = (daily.data ?? []).map((row) => ({
     day: formatWatDay(row.day).split(" ")[0],
@@ -136,6 +138,18 @@ function DashboardPage() {
           </ResponsiveContainer>
         </div>
       </section>
+
+      <section className="panel p-4 sm:p-6">
+        <h2 className="font-display text-lg font-bold">Your usage</h2>
+        <p className="mt-1 text-xs text-muted-foreground">What you have done so far today.</p>
+        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+          <StatCard label="Generated today" value={today.data?.generated ?? 0} loading={today.isLoading} />
+          <StatCard label="Clicked today" value={today.data?.clicked ?? 0} tone="brand" loading={today.isLoading} />
+          <StatCard label="Still to reach" value={today.data?.pending ?? 0} tone="success" loading={today.isLoading} />
+        </div>
+      </section>
+
+      <SmartAnalytics userId={user?.id} />
 
       <section className="panel flex flex-wrap items-center justify-between gap-3 p-4 sm:p-6">
         <p className="text-sm text-muted-foreground">

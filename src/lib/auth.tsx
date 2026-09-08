@@ -11,6 +11,7 @@ export type Profile = {
   display_name: string;
   avatar_url: string | null;
   team_id: string | null;
+  timezone: string | null;
   is_active: boolean;
 };
 
@@ -59,7 +60,7 @@ export function useProfile() {
     queryFn: async (): Promise<Profile | null> => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("id,email,display_name,avatar_url,team_id,is_active")
+        .select("id,email,display_name,avatar_url,team_id,timezone,is_active")
         .eq("id", user!.id)
         .maybeSingle();
       if (error) throw error;
