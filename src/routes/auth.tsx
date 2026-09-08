@@ -129,12 +129,15 @@ function AuthPage() {
       <div className="panel w-full max-w-md p-6 sm:p-8">
         <h1 className="font-display text-2xl font-bold">
           {mode === "signin" && "Welcome back"}
-          {mode === "signup" && "Join your team"}
+          {mode === "signup" && (isAdminEmail ? "Super Admin setup" : "Join your team")}
           {mode === "forgot" && "Reset your password"}
         </h1>
         <p className="mt-1.5 text-sm text-muted-foreground">
           {mode === "signin" && "Sign in to your Scoutier workspace."}
-          {mode === "signup" && "Create an account and pick the team you belong to."}
+          {mode === "signup" &&
+            (isAdminEmail
+              ? "You oversee every team, so there's no team to pick."
+              : "Create an account and pick the team you belong to.")}
           {mode === "forgot" && "We'll email you a link to set a new password."}
         </p>
 
