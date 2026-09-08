@@ -131,8 +131,11 @@ export const sendBulkBatch = createServerFn({ method: "POST" })
 
     for (const recipient of recipients ?? []) {
       const variant = variants[recipient.variant ?? 0];
-      const subject = personalize(variant?.subject || send.subject, recipient.contact_name);
+      const subject = inboxSubject(
+        personalize(variant?.subject || send.subject, recipient.contact_name),
+      );
       const text = personalize(variant?.body || send.body, recipient.contact_name);
+
 
       try {
         const response = await fetch(`${GATEWAY_URL}/emails`, {
