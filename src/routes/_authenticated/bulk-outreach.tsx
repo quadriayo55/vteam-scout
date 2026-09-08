@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -9,6 +9,7 @@ import { sendBulkBatch } from "@/lib/bulk.functions";
 import { isValidEmail, spamCheck, compact } from "@/lib/outreach";
 import { parseFile } from "@/lib/parse";
 import { useTimeZone, formatIn } from "@/lib/tz";
+import { useEmailSettings, senderAddress, DEFAULT_EMAIL_SETTINGS } from "@/lib/email-settings";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -41,9 +42,6 @@ type Recipient = { email: string; contact_name: string | null; domain: string | 
 
 const SUBJECT_MAX = 200;
 const BODY_MAX = 2000;
-const RESEND_FROM_NAME = "Verunda Team Scoutier";
-const RESEND_FROM_EMAIL = "outreach@verunda.com";
-const REPLY_TO_EMAIL = "quadri@verunda.com";
 
 function BulkOutreachPage() {
   const { user } = useAuth();
@@ -51,6 +49,7 @@ function BulkOutreachPage() {
   const tz = useTimeZone();
   const queryClient = useQueryClient();
   const runBatch = useServerFn(sendBulkBatch);
+  const emailSettings = useEmailSettings();
   const fileRef = useRef<HTMLInputElement>(null);
   const stopRef = useRef(false);
 
@@ -95,6 +94,8 @@ function BulkOutreachPage() {
       total: typed.length + fileRecipients.length,
     };
   }, [raw, fileRecipients]);
+
+  const sender = emailSettings.data ?? DEFAULT_EMAIL_SETTINGS;
 
   const subjectSpam = spamCheck(subject);
   const bodySpam = spamCheck(body);
@@ -171,9 +172,9 @@ function BulkOutreachPage() {
           user_id: user.id,
           team_id: profile.data?.team_id ?? null,
           name: name.trim() || `Send ${new Date().toISOString().slice(0, 10)}`,
-          from_name: RESEND_FROM_NAME,
-          from_email: RESEND_FROM_EMAIL,
-          reply_to: REPLY_TO_EMAIL,
+          from_name: sender.from_name,
+          from_email: senderAddress(sender),
+          reply_to: sender.reply_to,
           subject: subject.slice(0, SUBJECT_MAX),
           body: body.slice(0, BODY_MAX),
           total: stats.recipients.length,
@@ -319,9 +320,17 @@ function BulkOutreachPage() {
             <div className="rounded-md border border-border bg-muted/40 p-3 text-sm">
               <p className="font-semibold">Resend delivery</p>
               <p className="mt-1 text-muted-foreground">
-                From: {RESEND_FROM_NAME} &lt;{RESEND_FROM_EMAIL}&gt;
+                From: {sender.from_name} &lt;{senderAddress(sender)}&gt;
               </p>
-              <p className="text-muted-foreground">Replies: {REPLY_TO_EMAIL}</p>
+              <p className="text-muted-foreground">
+                Replies: {sender.reply_to ?? senderAddress(sender)}
+              </p>
+              <Link
+                to="/connections"
+                className="mt-1 inline-block text-xs font-semibold text-brand underline"
+              >
+                Change sender
+              </Link>
             </div>
           </div>
 

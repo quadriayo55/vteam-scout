@@ -78,6 +78,13 @@
       "when": 1788839521327,
       "tag": "0010_prospects_activity_and_campaign_opens",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1788840327406,
+      "tag": "0011_email_settings",
+      "breakpoints": true
     }
   ]
 }
