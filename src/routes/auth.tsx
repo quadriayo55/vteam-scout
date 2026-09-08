@@ -46,6 +46,28 @@ function AuthPage() {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
+  const [resending, setResending] = useState(false);
+
+  async function resendConfirmation() {
+    if (!email.trim()) {
+      toast.error("Enter your email first.");
+      return;
+    }
+    setResending(true);
+    try {
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email: email.trim(),
+        options: { emailRedirectTo: `${window.location.origin}/dashboard` },
+      });
+      if (error) throw error;
+      toast.success("Confirmation email sent — check your inbox and spam folder.");
+    } catch (error) {
+      toast.error(error instanceof Error ? friendlyAuthMessage(error.message) : "Couldn't resend it.");
+    } finally {
+      setResending(false);
+    }
+  }
 
 
   useEffect(() => {
