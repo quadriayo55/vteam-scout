@@ -398,6 +398,8 @@ function BulkOutreachPage() {
           subject: current.subject,
           body: current.body,
           name: stats.recipients[0]?.contact_name ?? "there",
+          brand: stats.recipients[0]?.brand ?? undefined,
+          domain: stats.recipients[0]?.domain ?? undefined,
         },
       });
     },
@@ -405,6 +407,27 @@ function BulkOutreachPage() {
     onError: (error) =>
       toast.error(error instanceof Error ? error.message : "That test could not be sent."),
   });
+
+  const removeSend = useMutation({
+    mutationFn: async (id: string) => {
+      const { error: rowsError } = await supabase
+        .from("bulk_send_recipients")
+        .delete()
+        .eq("send_id", id);
+      if (rowsError) throw rowsError;
+      const { error } = await supabase.from("bulk_sends").delete().eq("id", id);
+      if (error) throw error;
+      return id;
+    },
+    onSuccess: (id) => {
+      if (activeId === id) setActiveId(null);
+      queryClient.invalidateQueries({ queryKey: ["bulk-sends"] });
+      toast.success("Send deleted.");
+    },
+    onError: (error) =>
+      toast.error(error instanceof Error ? error.message : "That send could not be deleted."),
+  });
+
 
   const saveTemplate = useMutation({
     mutationFn: async () => {
