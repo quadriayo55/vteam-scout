@@ -374,18 +374,22 @@ function BulkOutreachPage() {
     mutationFn: async () => {
       if (!user) throw new Error("Please sign in again.");
       if (!templateName.trim()) throw new Error("Give the template a name.");
+      if (!templateSubject.trim()) throw new Error("Add a subject line for the template.");
+      if (!templateBody.trim()) throw new Error("Add a message for the template.");
       const { error } = await supabase.from("email_templates").insert({
         user_id: user.id,
         name: templateName.trim(),
         category: templateCategory,
-        subject: current.subject,
-        body: current.body,
+        subject: templateSubject.trim(),
+        body: templateBody.trim(),
       });
       if (error) throw error;
     },
     onSuccess: () => {
       setNewTemplate(false);
       setTemplateName("");
+      setTemplateSubject("");
+      setTemplateBody("");
       void templates.refetch();
       toast.success("Template saved.");
     },
