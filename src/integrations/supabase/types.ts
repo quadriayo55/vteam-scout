@@ -554,6 +554,19 @@ export type Database = {
           user_id: string
         }[]
       }
+      outreach_top_domains: {
+        Args: {
+          _days?: number
+          _limit?: number
+          _team_id?: string
+          _user_id?: string
+        }
+        Returns: {
+          clicked: number
+          domain: string
+          generated: number
+        }[]
+      }
       outreach_totals: {
         Args: { _since?: string; _team_id?: string; _user_id?: string }
         Returns: {
