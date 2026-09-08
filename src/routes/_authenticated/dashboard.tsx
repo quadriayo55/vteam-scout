@@ -7,7 +7,8 @@ import { SmartAnalytics } from "@/components/SmartAnalytics";
 import { LiveIndicator } from "@/components/LiveIndicator";
 import { Button } from "@/components/ui/button";
 import { formatWatDay } from "@/lib/wat";
-import { Link2, MousePointerClick, Clock, Target } from "lucide-react";
+import { Link2, MousePointerClick, Clock, Target, Mail, Send, AlertTriangle, Users } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Area,
   AreaChart,
@@ -40,6 +41,37 @@ function DashboardPage() {
   const totals = useQuery(totalsQuery({ userId: user?.id }, "all"));
   const daily = useQuery(dailyQuery({ userId: user?.id }, "7d"));
   const today = useQuery(totalsQuery({ userId: user?.id }, "today"));
+
+  const emails = useQuery({
+    queryKey: ["email-report", user?.id ?? null],
+    enabled: Boolean(user?.id),
+    refetchInterval: 20000,
+    queryFn: async () => {
+      const [total, todayRows, prepared, failed] = await Promise.all([
+        supabase.rpc("email_sent_total"),
+        supabase.rpc("email_sent_daily", { _days: 1 }),
+        supabase
+          .from("bulk_send_recipients")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", user!.id),
+        supabase
+          .from("bulk_send_recipients")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", user!.id)
+          .eq("status", "failed"),
+      ]);
+      const sentToday = ((todayRows.data ?? []) as unknown as { sent: number }[]).reduce(
+        (sum, row) => sum + Number(row.sent),
+        0,
+      );
+      return {
+        sent: Number(total.data ?? 0),
+        sentToday,
+        loaded: prepared.count ?? 0,
+        failed: failed.count ?? 0,
+      };
+    },
+  });
 
   const chartData = (daily.data ?? []).map((row) => ({
     day: formatWatDay(row.day).split(" ")[0],
@@ -93,6 +125,43 @@ function DashboardPage() {
           loading={totals.isLoading}
         />
       </div>
+
+      <section className="panel space-y-3 p-4 sm:p-6">
+        <div>
+          <h2 className="font-display text-lg font-bold">Bulk email report</h2>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Every lead you upload in Bulk Outreach and every email that goes out is counted here.
+          </p>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <StatCard
+            label="Leads uploaded"
+            value={emails.data?.loaded ?? 0}
+            icon={<Users className="size-4" />}
+            loading={emails.isLoading}
+          />
+          <StatCard
+            label="Emails sent"
+            value={emails.data?.sent ?? 0}
+            tone="brand"
+            icon={<Mail className="size-4" />}
+            loading={emails.isLoading}
+          />
+          <StatCard
+            label="Sent today"
+            value={emails.data?.sentToday ?? 0}
+            tone="success"
+            icon={<Send className="size-4" />}
+            loading={emails.isLoading}
+          />
+          <StatCard
+            label="Failed"
+            value={emails.data?.failed ?? 0}
+            icon={<AlertTriangle className="size-4" />}
+            loading={emails.isLoading}
+          />
+        </div>
+      </section>
 
       <section className="panel p-4 sm:p-6">
         <h2 className="font-display text-lg font-bold">Last 7 days</h2>
