@@ -4,7 +4,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
 import { dailyQuery, totalsQuery, RANGE_LABELS, type Range } from "@/lib/stats";
 import { StatCard } from "@/components/StatCard";
+import { CampaignOpensChart } from "@/components/CampaignOpensChart";
 import { LiveIndicator } from "@/components/LiveIndicator";
+
 import { formatWatDay } from "@/lib/wat";
 import { Link2, MousePointerClick, Clock, Target } from "lucide-react";
 
@@ -89,7 +91,10 @@ function AnalyticsPage() {
         />
       </div>
 
+      <CampaignOpensChart />
+
       <section className="panel overflow-hidden">
+
         <h2 className="p-4 font-display text-lg font-bold sm:p-6 sm:pb-4">Daily breakdown</h2>
 
         {/* Mobile cards */}
