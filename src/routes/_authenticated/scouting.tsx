@@ -17,7 +17,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Search, Trash2, Star, Building2 } from "lucide-react";
+import { Plus, Search, Trash2, Star, Building2, Download } from "lucide-react";
+import { RoleGate } from "@/components/RoleGate";
+import { ProspectImport } from "@/components/ProspectImport";
 
 export const Route = createFileRoute("/_authenticated/scouting")({
   head: () => ({
@@ -37,7 +39,11 @@ export const Route = createFileRoute("/_authenticated/scouting")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  component: ScoutingPage,
+  component: () => (
+    <RoleGate need="manageProspects">
+      <ScoutingPage />
+    </RoleGate>
+  ),
 });
 
 const STAGES = ["new", "contacted", "replied", "won", "lost"] as const;
@@ -95,6 +101,7 @@ function ScoutingPage() {
   const [search, setSearch] = useState("");
   const [stageFilter, setStageFilter] = useState<"all" | Stage>("all");
   const [openForm, setOpenForm] = useState(false);
+  const [openImport, setOpenImport] = useState(false);
 
 
   const people = useQuery({
@@ -187,11 +194,26 @@ function ScoutingPage() {
         </div>
         <div className="flex items-center gap-3">
           <LiveIndicator updatedAt={prospects.dataUpdatedAt} />
+          <Button size="sm" variant="secondary" onClick={() => setOpenImport((v) => !v)}>
+            <Download className="mr-2 size-4" /> Import prospects
+          </Button>
           <Button size="sm" onClick={() => setOpenForm((v) => !v)}>
             <Plus className="mr-2 size-4" /> Add prospect
           </Button>
         </div>
       </div>
+
+      {openImport && (
+        <ProspectImport
+          people={people.data ?? []}
+          campaigns={campaigns.data ?? []}
+          userId={user?.id ?? null}
+          onDone={() => {
+            setOpenImport(false);
+            refresh();
+          }}
+        />
+      )}
 
       {openForm && (
         <NewProspectForm
