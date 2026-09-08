@@ -4,7 +4,6 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, useRoles } from "@/lib/auth";
-import { teamsQuery } from "@/lib/stats";
 import { LiveIndicator } from "@/components/LiveIndicator";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,12 +26,12 @@ export const Route = createFileRoute("/_authenticated/scouting")({
       {
         name: "description",
         content:
-          "List scouted prospects with contacts and a fit score, then assign them to a team, a scout and a campaign.",
+          "List scouted prospects with contacts and a fit score, then assign them to a scout and a campaign.",
       },
       { property: "og:title", content: "Prospect Scouting — Verunda Team Scoutier" },
       {
         property: "og:description",
-        content: "Score prospects and assign them to teams and campaigns.",
+        content: "Score prospects and assign them to scouts and campaigns.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -85,7 +84,6 @@ const EMPTY = {
   linkedin: "",
   score: "60",
   stage: "new" as Stage,
-  team_id: "",
   assigned_to: "",
   campaign_id: "",
 };
@@ -96,10 +94,8 @@ function ScoutingPage() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [stageFilter, setStageFilter] = useState<"all" | Stage>("all");
-  const [teamFilter, setTeamFilter] = useState<string>("all");
   const [openForm, setOpenForm] = useState(false);
 
-  const teams = useQuery(teamsQuery());
 
   const people = useQuery({
     queryKey: ["scouting-people"],
@@ -144,16 +140,13 @@ function ScoutingPage() {
     const term = search.trim().toLowerCase();
     return (prospects.data ?? []).filter((row) => {
       if (stageFilter !== "all" && row.stage !== stageFilter) return false;
-      if (teamFilter !== "all" && (row.team_id ?? "") !== teamFilter) return false;
       if (!term) return true;
       return [row.business_name, row.website, row.country, row.email, row.instagram]
         .filter(Boolean)
         .some((value) => String(value).toLowerCase().includes(term));
     });
-  }, [prospects.data, search, stageFilter, teamFilter]);
+  }, [prospects.data, search, stageFilter]);
 
-  const teamName = (id: string | null) =>
-    teams.data?.find((team) => team.id === id)?.name ?? "Unassigned";
   const personName = (id: string | null) =>
     people.data?.find((person) => person.id === id)?.display_name ?? "Nobody yet";
   const campaignName = (id: string | null) =>
@@ -202,7 +195,6 @@ function ScoutingPage() {
 
       {openForm && (
         <NewProspectForm
-          teams={teams.data ?? []}
           people={people.data ?? []}
           campaigns={campaigns.data ?? []}
           userId={user?.id ?? null}
@@ -213,7 +205,7 @@ function ScoutingPage() {
         />
       )}
 
-      <div className="grid gap-2 sm:grid-cols-3">
+      <div className="grid gap-2 sm:grid-cols-2">
         <div className="relative">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -232,19 +224,6 @@ function ScoutingPage() {
             {STAGES.map((stage) => (
               <SelectItem key={stage} value={stage}>
                 {STAGE_LABELS[stage]}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select value={teamFilter} onValueChange={setTeamFilter}>
-          <SelectTrigger>
-            <SelectValue placeholder="Any team" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Any team</SelectItem>
-            {(teams.data ?? []).map((team) => (
-              <SelectItem key={team.id} value={team.id}>
-                {team.name}
               </SelectItem>
             ))}
           </SelectContent>
@@ -293,7 +272,7 @@ function ScoutingPage() {
                   </p>
                   {row.notes && <p className="mt-1 text-sm">{row.notes}</p>}
                   <p className="mt-1 text-xs text-muted-foreground">
-                    {teamName(row.team_id)} · {personName(row.assigned_to)}
+                    {personName(row.assigned_to)}
                     {campaignName(row.campaign_id) ? ` · ${campaignName(row.campaign_id)}` : ""}
                   </p>
                 </div>
@@ -310,24 +289,6 @@ function ScoutingPage() {
                       {STAGES.map((stage) => (
                         <SelectItem key={stage} value={stage}>
                           {STAGE_LABELS[stage]}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Select
-                    value={row.team_id ?? "none"}
-                    onValueChange={(value) =>
-                      update(row.id, { team_id: value === "none" ? null : value })
-                    }
-                  >
-                    <SelectTrigger className="w-40">
-                      <SelectValue placeholder="Assign team" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">No team</SelectItem>
-                      {(teams.data ?? []).map((team) => (
-                        <SelectItem key={team.id} value={team.id}>
-                          {team.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -366,13 +327,11 @@ function ScoutingPage() {
 }
 
 function NewProspectForm({
-  teams,
   people,
   campaigns,
   userId,
   onDone,
 }: {
-  teams: { id: string; name: string }[];
   people: { id: string; display_name: string; email: string }[];
   campaigns: { id: string; name: string }[];
   userId: string | null;
@@ -404,7 +363,6 @@ function NewProspectForm({
         linkedin: form.linkedin.trim() || null,
         score: Math.min(100, Math.max(0, Number(form.score) || 0)),
         stage: form.stage,
-        team_id: form.team_id || null,
         assigned_to: form.assigned_to || null,
         campaign_id: form.campaign_id || null,
         created_by: userId,
@@ -443,22 +401,6 @@ function NewProspectForm({
               {STAGES.map((stage) => (
                 <SelectItem key={stage} value={stage}>
                   {STAGE_LABELS[stage]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-2">
-          <Label>Team</Label>
-          <Select value={form.team_id || "none"} onValueChange={(value) => set("team_id", value === "none" ? "" : value)}>
-            <SelectTrigger>
-              <SelectValue placeholder="No team" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">No team</SelectItem>
-              {teams.map((team) => (
-                <SelectItem key={team.id} value={team.id}>
-                  {team.name}
                 </SelectItem>
               ))}
             </SelectContent>
