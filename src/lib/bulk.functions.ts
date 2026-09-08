@@ -212,10 +212,10 @@ export const sendDraftTest = createServerFn({ method: "POST" })
       to: string;
       fromName: string;
       fromEmail: string;
-      replyTo?: string;
+      replyTo?: string | undefined;
       subject: string;
       body: string;
-      name?: string;
+      name?: string | undefined;
     }) => {
       const to = String(input?.to ?? "").trim();
       const fromEmail = String(input?.fromEmail ?? "").trim();
