@@ -107,10 +107,6 @@ export const sendBulkBatch = createServerFn({ method: "POST" })
       const variant = variants[recipient.variant ?? 0];
       const subject = personalize(variant?.subject || send.subject, recipient.contact_name);
       const text = personalize(variant?.body || send.body, recipient.contact_name);
-      const html = `<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6">${escapeHtml(
-        text,
-      ).replace(/\n/g, "<br />")}</div>`;
-
 
       try {
         const response = await fetch(`${GATEWAY_URL}/emails`, {
@@ -125,11 +121,16 @@ export const sendBulkBatch = createServerFn({ method: "POST" })
             from: fromHeader,
             to: [recipient.email],
             subject,
-            html,
+            // Plain text only: a person-to-person message is far more likely to
+            // land in the main inbox than a styled, marketing-looking email.
             text,
             reply_to: replyTo,
+            headers: {
+              "X-Entity-Ref-ID": crypto.randomUUID(),
+            },
           }),
         });
+
 
         const bodyText = await response.text();
         if (!response.ok) {
