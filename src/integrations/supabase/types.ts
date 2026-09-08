@@ -186,6 +186,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_view_user: { Args: { _user_id: string }; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -196,6 +197,40 @@ export type Database = {
       is_super_admin: { Args: never; Returns: boolean }
       leads_team: { Args: { _team_id: string }; Returns: boolean }
       my_team_id: { Args: never; Returns: string }
+      outreach_daily: {
+        Args: { _days: number; _team_id?: string; _user_id?: string }
+        Returns: {
+          day: string
+          email_click: number
+          email_gen: number
+          social_click: number
+          social_gen: number
+          total_click: number
+          total_gen: number
+          whatsapp_click: number
+          whatsapp_gen: number
+        }[]
+      }
+      outreach_leaderboard: {
+        Args: { _days?: number; _team_id?: string }
+        Returns: {
+          avatar_url: string
+          clicked: number
+          display_name: string
+          email: string
+          generated: number
+          team_id: string
+          team_name: string
+          user_id: string
+        }[]
+      }
+      outreach_totals: {
+        Args: { _since?: string; _team_id?: string; _user_id?: string }
+        Returns: {
+          clicked: number
+          generated: number
+        }[]
+      }
     }
     Enums: {
       app_role: "member" | "team_leader" | "super_admin"

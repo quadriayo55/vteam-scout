@@ -15,6 +15,13 @@
       "when": 1788827654393,
       "tag": "0001_auto_role_assignment",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1788827769964,
+      "tag": "0002_outreach_stats_functions",
+      "breakpoints": true
     }
   ]
 }
