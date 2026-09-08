@@ -9,6 +9,7 @@ import { LiveIndicator } from "@/components/LiveIndicator";
 
 import { formatWatDay } from "@/lib/wat";
 import { Link2, MousePointerClick, Clock, Target } from "lucide-react";
+import { RoleGate } from "@/components/RoleGate";
 
 export const Route = createFileRoute("/_authenticated/analytics")({
   head: () => ({
@@ -22,7 +23,11 @@ export const Route = createFileRoute("/_authenticated/analytics")({
       { property: "og:description", content: "Time-bounded outreach analytics by day and channel." },
     ],
   }),
-  component: AnalyticsPage,
+  component: () => (
+    <RoleGate need="seeEveryonesStats">
+      <AnalyticsPage />
+    </RoleGate>
+  ),
 });
 
 const RANGES: Range[] = ["today", "7d", "30d"];

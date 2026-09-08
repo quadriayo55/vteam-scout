@@ -11,9 +11,9 @@ export const Route = createFileRoute("/_authenticated/leaderboard")({
   head: () => ({
     meta: [
       { title: "Leaderboard — Verunda Team Scoutier" },
-      { name: "description", content: "Team ranking by outreach clicks and links generated." },
+      { name: "description", content: "Ranking by outreach clicks and links generated." },
       { property: "og:title", content: "Leaderboard — Verunda Team Scoutier" },
-      { property: "og:description", content: "Team ranking by outreach clicks and links generated." },
+      { property: "og:description", content: "Ranking by outreach clicks and links generated." },
     ],
   }),
   component: LeaderboardPage,
@@ -76,7 +76,7 @@ function LeaderboardPage() {
                   {isMe && <span className="ml-2 text-xs text-brand">you</span>}
                 </p>
                 <p className="truncate text-xs text-muted-foreground">
-                  {row.team_name ?? "No team"}
+                  {row.email}
                 </p>
               </div>
               <div className="shrink-0 text-right">

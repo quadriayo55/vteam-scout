@@ -18,6 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { StatCard } from "@/components/StatCard";
 import { Loader2, Mail, Play, Pause, Send, Upload, AlertTriangle } from "lucide-react";
+import { RoleGate } from "@/components/RoleGate";
 
 export const Route = createFileRoute("/_authenticated/bulk-outreach")({
   head: () => ({
@@ -35,7 +36,11 @@ export const Route = createFileRoute("/_authenticated/bulk-outreach")({
       },
     ],
   }),
-  component: BulkOutreachPage,
+  component: () => (
+    <RoleGate need="sendBulkEmail">
+      <BulkOutreachPage />
+    </RoleGate>
+  ),
 });
 
 type Recipient = { email: string; contact_name: string | null; domain: string | null };
@@ -170,7 +175,6 @@ function BulkOutreachPage() {
         .from("bulk_sends")
         .insert({
           user_id: user.id,
-          team_id: profile.data?.team_id ?? null,
           name: name.trim() || `Send ${new Date().toISOString().slice(0, 10)}`,
           from_name: sender.from_name,
           from_email: senderAddress(sender),
