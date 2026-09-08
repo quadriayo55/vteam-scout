@@ -22,8 +22,8 @@ export const recordInviteClick = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: rows, error } = await supabaseAdmin.rpc("record_invite_click", {
       _code: data.code,
-      _referrer: data.referrer ?? null,
-      _user_agent: data.userAgent ?? null,
+      ...(data.referrer ? { _referrer: data.referrer } : {}),
+      ...(data.userAgent ? { _user_agent: data.userAgent } : {}),
     });
     if (error) throw error;
     const row = (rows as unknown as Array<{
