@@ -18,7 +18,7 @@ export function watDayStart(daysAgo = 0): Date {
 export function watDayKeys(days: number): string[] {
   const keys: string[] = [];
   for (let i = days - 1; i >= 0; i--) {
-    keys.push(watDayKey(watDayStart(i).getTime() + WAT_OFFSET_MS + 1));
+    keys.push(watDayKey(new Date(watDayStart(i).getTime() + WAT_OFFSET_MS + 1)));
   }
   return keys;
 }

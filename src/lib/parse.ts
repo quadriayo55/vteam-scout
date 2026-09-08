@@ -20,7 +20,9 @@ export type ParsedFile = {
 export async function parseFile(file: File): Promise<ParsedFile> {
   const buffer = await file.arrayBuffer();
   const workbook = XLSX.read(buffer, { type: "array", raw: false });
-  const sheet = workbook.Sheets[workbook.SheetNames[0]];
+  const sheetName = workbook.SheetNames[0];
+  if (!sheetName) throw new Error(`${file.name} has no readable sheet.`);
+  const sheet = workbook.Sheets[sheetName]!;
   const matrix = XLSX.utils.sheet_to_json<string[]>(sheet, {
     header: 1,
     blankrows: false,

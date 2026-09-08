@@ -2,7 +2,10 @@ import { queryOptions } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { watDayStart } from "./wat";
 
-export type Scope = { userId?: string | null; teamId?: string | null };
+export type Scope = {
+  userId?: string | null | undefined;
+  teamId?: string | null | undefined;
+};
 export type Range = "today" | "7d" | "30d" | "all";
 
 export const RANGE_DAYS: Record<Range, number> = { today: 1, "7d": 7, "30d": 30, all: 30 };
@@ -27,10 +30,11 @@ export function totalsQuery(scope: Scope, range: Range = "all") {
     queryKey: ["totals", scope.userId ?? null, scope.teamId ?? null, range],
     refetchInterval: 15000,
     queryFn: async (): Promise<Totals> => {
+      const from = since(range);
       const { data, error } = await supabase.rpc("outreach_totals", {
-        _user_id: scope.userId ?? undefined,
-        _team_id: scope.teamId ?? undefined,
-        _since: since(range) ?? undefined,
+        ...(scope.userId ? { _user_id: scope.userId } : {}),
+        ...(scope.teamId ? { _team_id: scope.teamId } : {}),
+        ...(from ? { _since: from } : {}),
       });
       if (error) throw error;
       const row = (data as { generated: number; clicked: number }[] | null)?.[0];
@@ -65,8 +69,8 @@ export function dailyQuery(scope: Scope, range: Range) {
     queryFn: async (): Promise<DailyRow[]> => {
       const { data, error } = await supabase.rpc("outreach_daily", {
         _days: RANGE_DAYS[range],
-        _user_id: scope.userId ?? undefined,
-        _team_id: scope.teamId ?? undefined,
+        ...(scope.userId ? { _user_id: scope.userId } : {}),
+        ...(scope.teamId ? { _team_id: scope.teamId } : {}),
       });
       if (error) throw error;
       return (data ?? []) as unknown as DailyRow[];
@@ -92,7 +96,7 @@ export function leaderboardQuery(days: number, teamId?: string | null) {
     queryFn: async (): Promise<LeaderRow[]> => {
       const { data, error } = await supabase.rpc("outreach_leaderboard", {
         _days: days,
-        _team_id: teamId ?? undefined,
+        ...(teamId ? { _team_id: teamId } : {}),
       });
       if (error) throw error;
       return (data ?? []) as unknown as LeaderRow[];

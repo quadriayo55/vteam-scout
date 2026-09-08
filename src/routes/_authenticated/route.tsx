@@ -63,7 +63,8 @@ function AuthenticatedLayout() {
       .insert({
         id: user.id,
         email: user.email ?? "",
-        display_name: pending.display_name?.trim() || (user.email ?? "").split("@")[0],
+        display_name:
+          pending.display_name?.trim() || (user.email ?? "").split("@")[0] || "Scout",
         team_id: pending.team_id ?? null,
       })
       .then(() => {

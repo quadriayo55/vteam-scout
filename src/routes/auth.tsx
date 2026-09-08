@@ -88,7 +88,7 @@ function AuthPage() {
           const { error: profileError } = await supabase.from("profiles").insert({
             id: data.user.id,
             email: email.trim(),
-            display_name: name.trim() || email.trim().split("@")[0],
+            display_name: name.trim() || email.trim().split("@")[0] || "Scout",
             team_id: teamId,
           });
           if (profileError) throw profileError;
