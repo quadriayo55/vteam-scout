@@ -160,9 +160,19 @@ export const sendBulkBatch = createServerFn({ method: "POST" })
     for (const recipient of recipients ?? []) {
       const variant = variants[recipient.variant ?? 0];
       const subject = inboxSubject(
-        personalize(variant?.subject || send.subject, recipient.contact_name),
+        personalize(
+          variant?.subject || send.subject,
+          recipient.contact_name,
+          recipient.brand,
+          recipient.domain,
+        ),
       );
-      const text = personalize(variant?.body || send.body, recipient.contact_name);
+      const text = personalize(
+        variant?.body || send.body,
+        recipient.contact_name,
+        recipient.brand,
+        recipient.domain,
+      );
 
 
       try {
