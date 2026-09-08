@@ -914,6 +914,11 @@ function BulkOutreachPage() {
                   value={batchSize}
                   onChange={(event) => setBatchSize(Number(event.target.value) || 1)}
                 />
+                <p className="text-xs text-muted-foreground">
+                  How many emails go out in one go before the app pauses. With {batchSize} per batch,
+                  a list of 1,000 people is sent in small groups of {batchSize} rather than all at
+                  once — this looks natural and protects your sending reputation.
+                </p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="gap">Gap between batches (seconds)</Label>
@@ -925,6 +930,10 @@ function BulkOutreachPage() {
                   value={gapSeconds}
                   onChange={(event) => setGapSeconds(Number(event.target.value) || 0)}
                 />
+                <p className="text-xs text-muted-foreground">
+                  Waiting time before the next {batchSize} go out — roughly{" "}
+                  {compact(Math.round((batchSize * 3600) / Math.max(gapSeconds, 1)))} emails an hour.
+                </p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="cap">Daily limit</Label>
@@ -932,9 +941,15 @@ function BulkOutreachPage() {
                   id="cap"
                   type="number"
                   min={1}
+                  max={5000}
                   value={dailyCap}
-                  onChange={(event) => setDailyCap(Number(event.target.value) || 1)}
+                  onChange={(event) =>
+                    setDailyCap(Math.min(Number(event.target.value) || 1, 5000))
+                  }
                 />
+                <p className="text-xs text-muted-foreground">
+                  Most you'll send in one day — up to 5,000. Anything left over waits for tomorrow.
+                </p>
               </div>
             </div>
             <Button
