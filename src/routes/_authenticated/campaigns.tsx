@@ -313,7 +313,7 @@ function CampaignCard({
     queryKey: ["campaign-progress", campaign.id],
     refetchInterval: 20000,
     queryFn: async (): Promise<ProgressRow[]> => {
-      const { data, error } = await supabase.rpc("campaign_progress", {
+      const { data, error } = await supabase.rpc("campaign_engagement", {
         _campaign_id: campaign.id,
       });
       if (error) throw error;
@@ -329,9 +329,10 @@ function CampaignCard({
           target: acc.target + Number(row.target ?? 0),
           generated: acc.generated + Number(row.generated ?? 0),
           clicked: acc.clicked + Number(row.clicked ?? 0),
+          opens: acc.opens + Number(row.link_opens ?? 0),
           signed: acc.signed + (row.joined_at ? 1 : 0),
         }),
-        { target: 0, generated: 0, clicked: 0, signed: 0 },
+        { target: 0, generated: 0, clicked: 0, opens: 0, signed: 0 },
       ),
     [rows],
   );
