@@ -12,3 +12,6 @@ Allow: /
 
 User-agent: *
 Allow: /
+
+
+Sitemap: https://verunda-team-scoutier.lovable.app/sitemap.xml
