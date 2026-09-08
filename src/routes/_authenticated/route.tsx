@@ -20,6 +20,7 @@ import {
   Link2,
   Megaphone,
   Send,
+  Plug,
   BarChart3,
   Trophy,
   Users,
