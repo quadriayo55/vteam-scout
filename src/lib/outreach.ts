@@ -5,6 +5,7 @@ export const CHANNELS = [
   "instagram",
   "tiktok",
   "linkedin",
+  "domain",
 ] as const;
 
 export type Channel = (typeof CHANNELS)[number];
@@ -16,6 +17,7 @@ export const CHANNEL_LABELS: Record<Channel, string> = {
   instagram: "Instagram",
   tiktok: "TikTok",
   linkedin: "LinkedIn",
+  domain: "Domain",
 };
 
 const HEADER_HINTS: Record<Channel, string[]> = {
@@ -25,6 +27,7 @@ const HEADER_HINTS: Record<Channel, string[]> = {
   instagram: ["instagram", "ig", "insta", "instagramurl"],
   tiktok: ["tiktok", "tik tok", "tt", "tiktokurl"],
   linkedin: ["linkedin", "li", "linkedinurl"],
+  domain: ["domain", "website", "websiteurl", "storeurl", "storelink", "shopurl", "weburl", "site"],
 };
 
 const NAME_HINTS = ["name", "firstname", "first name", "fullname", "full name", "contact name", "store", "storename"];
@@ -99,6 +102,11 @@ export function buildProfileUrl(channel: Channel, raw: string): string | null {
       return /^(in|company|school)\//i.test(handle)
         ? `https://www.linkedin.com/${handle}`
         : `https://www.linkedin.com/in/${handle}`;
+    }
+    case "domain": {
+      const host = stripDomains(value, []);
+      if (!host || !host.includes(".")) return null;
+      return `https://${host}`;
     }
     default:
       return null;
