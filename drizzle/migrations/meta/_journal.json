@@ -106,6 +106,13 @@
       "when": 1788843916991,
       "tag": "0014_lead_file_batches_and_team_read",
       "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1788844886145,
+      "tag": "0015_scoutier_parity_templates_rotation_streaks",
+      "breakpoints": true
     }
   ]
 }

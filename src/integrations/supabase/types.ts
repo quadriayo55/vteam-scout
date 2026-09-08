@@ -27,6 +27,7 @@ export type Database = {
           sent_at: string | null
           status: string
           user_id: string
+          variant: number
         }
         Insert: {
           contact_name?: string | null
@@ -40,6 +41,7 @@ export type Database = {
           sent_at?: string | null
           status?: string
           user_id: string
+          variant?: number
         }
         Update: {
           contact_name?: string | null
@@ -53,6 +55,7 @@ export type Database = {
           sent_at?: string | null
           status?: string
           user_id?: string
+          variant?: number
         }
         Relationships: [
           {
@@ -77,6 +80,8 @@ export type Database = {
           id: string
           name: string
           reply_to: string | null
+          rotation: string
+          rotation_size: number
           sent: number
           status: string
           subject: string
@@ -84,6 +89,7 @@ export type Database = {
           total: number
           updated_at: string
           user_id: string
+          variants: Json
         }
         Insert: {
           batch_size?: number
@@ -97,6 +103,8 @@ export type Database = {
           id?: string
           name: string
           reply_to?: string | null
+          rotation?: string
+          rotation_size?: number
           sent?: number
           status?: string
           subject: string
@@ -104,6 +112,7 @@ export type Database = {
           total?: number
           updated_at?: string
           user_id: string
+          variants?: Json
         }
         Update: {
           batch_size?: number
@@ -117,6 +126,8 @@ export type Database = {
           id?: string
           name?: string
           reply_to?: string | null
+          rotation?: string
+          rotation_size?: number
           sent?: number
           status?: string
           subject?: string
@@ -124,6 +135,7 @@ export type Database = {
           total?: number
           updated_at?: string
           user_id?: string
+          variants?: Json
         }
         Relationships: [
           {
@@ -345,6 +357,36 @@ export type Database = {
           from_name?: string
           reply_to?: string | null
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      email_templates: {
+        Row: {
+          body: string
+          category: string
+          created_at: string
+          id: string
+          name: string
+          subject: string
+          user_id: string
+        }
+        Insert: {
+          body?: string
+          category?: string
+          created_at?: string
+          id?: string
+          name: string
+          subject?: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          category?: string
+          created_at?: string
+          id?: string
+          name?: string
+          subject?: string
           user_id?: string
         }
         Relationships: []
@@ -671,6 +713,14 @@ export type Database = {
         }[]
       }
       can_view_user: { Args: { _user_id: string }; Returns: boolean }
+      email_sent_daily: {
+        Args: { _days?: number; _user_id?: string }
+        Returns: {
+          day: string
+          sent: number
+        }[]
+      }
+      email_sent_total: { Args: { _user_id?: string }; Returns: number }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
