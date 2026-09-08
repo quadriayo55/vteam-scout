@@ -125,6 +125,8 @@ function BulkOutreachPage() {
   const [newTemplate, setNewTemplate] = useState(false);
   const [templateName, setTemplateName] = useState("");
   const [templateCategory, setTemplateCategory] = useState<string>(TEMPLATE_CATEGORIES[0]);
+  const [templateSubject, setTemplateSubject] = useState("");
+  const [templateBody, setTemplateBody] = useState("");
 
   const templates = useTemplates(user?.id);
   const sender = emailSettings.data ?? DEFAULT_EMAIL_SETTINGS;
