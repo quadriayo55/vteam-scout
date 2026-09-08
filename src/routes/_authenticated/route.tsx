@@ -2,7 +2,7 @@ import { createFileRoute, Link, Outlet, useNavigate } from "@tanstack/react-rout
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth, useProfile, useRoles, displayNameOf } from "@/lib/auth";
+import { useAuth, useProfile, usePermissions, displayNameOf } from "@/lib/auth";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -154,7 +154,7 @@ function AuthenticatedLayout() {
           <Logo />
         </Link>
         <nav className="mt-8 space-y-1">
-          {NAV.map((item) => (
+          {nav.map((item) => (
             <NavItem key={item.to} {...item} />
           ))}
         </nav>
@@ -176,7 +176,7 @@ function AuthenticatedLayout() {
 
         {open && (
           <nav className="space-y-1 border-b border-border bg-surface/80 p-3 lg:hidden">
-            {NAV.map((item) => (
+            {nav.map((item) => (
               <NavItem key={item.to} {...item} onNavigate={() => setOpen(false)} />
             ))}
           </nav>
