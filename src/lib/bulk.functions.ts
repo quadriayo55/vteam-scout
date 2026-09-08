@@ -13,9 +13,37 @@ export type BatchResult = {
   errors: string[];
 };
 
-function personalize(template: string, name: string | null) {
+/** Turns "https://www.shop-name.myshopify.com/" into "Shop Name". */
+function brandFromDomain(domain: string | null) {
+  const host = (domain ?? "")
+    .trim()
+    .replace(/^https?:\/\//i, "")
+    .replace(/^www\./i, "")
+    .replace(/\/.*$/, "");
+  if (!host) return "";
+  const first = host.split(".")[0] ?? "";
+  return first
+    .replace(/[-_]+/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase())
+    .trim();
+}
+
+function personalize(
+  template: string,
+  name: string | null,
+  brand?: string | null,
+  domain?: string | null,
+) {
   const clean = name?.trim() ?? "";
-  const text = (template ?? "").replaceAll("{name}", clean || "there");
+  const site = (domain ?? "").trim().replace(/^https?:\/\//i, "").replace(/\/+$/, "");
+  const store = (brand ?? "").trim() || brandFromDomain(domain ?? null) || site || "your store";
+  const text = (template ?? "")
+    .replaceAll("{brand}", store)
+    .replaceAll("{store}", store)
+    .replaceAll("{company}", store)
+    .replaceAll("{website}", site || store)
+    .replaceAll("{domain}", site || store)
+    .replaceAll("{name}", clean || "there");
   // Without a real name, "Hi there," is natural but "Partnering with there" is not.
   return clean
     ? text
