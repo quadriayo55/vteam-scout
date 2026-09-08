@@ -467,7 +467,7 @@ function BulkOutreachPage() {
         <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-brand">Bulk Outreach</p>
         <h1 className="font-display text-2xl font-bold sm:text-3xl">Fast mail send</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Paste anything with emails in it, write up to five rotating messages, and every email goes
+          Paste anything with emails in it, write up to ten rotating messages, and every email goes
           out personalised with <code className="rounded bg-muted px-1">{"{name}"}</code>.
         </p>
       </div>
