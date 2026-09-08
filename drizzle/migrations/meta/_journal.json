@@ -1,0 +1,34 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1788827640319,
+      "tag": "0000_verunda_core_schema",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1788827654393,
+      "tag": "0001_auto_role_assignment",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1788827769964,
+      "tag": "0002_outreach_stats_functions",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1788828077734,
+      "tag": "0003_avatar_storage_policies",
+      "breakpoints": true
+    }
+  ]
+}
