@@ -182,7 +182,7 @@ function AuthPage() {
             </div>
           )}
 
-          {mode === "signup" && (
+          {mode === "signup" && !isAdminEmail && (
             <div className="space-y-2">
               <Label>Team</Label>
               <Select value={teamId} onValueChange={setTeamId}>
