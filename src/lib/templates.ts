@@ -16,34 +16,34 @@ export const STARTER_TEMPLATES: Omit<TemplateRow, "id">[] = [
   {
     name: "Cold Outreach",
     category: "Sales",
-    subject: "Quick idea for {name}",
+    subject: "Quick question",
     body: "Hi {name},\n\nI came across your store and was really impressed by what you're building.\n\nWe help brands like yours reach more of the right customers without extra ad spend. Would you be open to a short look at how it works?\n\nEither way, keep up the great work.",
   },
   {
     name: "Follow-up",
     category: "Follow-up",
-    subject: "Following up, {name}",
+    subject: "Following up",
     body: "Hello {name},\n\nI hope this email finds you well. I wanted to follow up on my previous note in case it slipped past your inbox.\n\nHappy to send over a two-minute summary if that's easier than a call.\n\nThank you for your time.",
   },
   {
     name: "Partnership Pitch",
     category: "Business",
-    subject: "Partnering with {name}",
+    subject: "Working together",
     body: "Hi {name},\n\nI've been following {name}'s growth and I'm genuinely impressed by the direction you're taking.\n\nWe work with a small group of partners each quarter and I think there's a natural fit here. Would it make sense to explore it?\n\nGlad to share details whenever suits you.",
   },
   {
-    name: "Exclusive Offer",
-    category: "Marketing",
-    subject: "Something set aside for {name}",
+    name: "Introduction",
+    category: "Business",
+    subject: "Introducing myself",
     body: "Hi {name},\n\nWe're opening a small number of spots this month and I wanted you to have first look before we share it more widely.\n\nIf it's interesting, reply and I'll send the details across.\n\nAll the best.",
   },
 ];
 
 /** Ready-made subject openers, matching the quick chips in the composer. */
 export const SUBJECT_CHIPS: { label: string; value: string }[] = [
-  { label: "Quick question", value: "Quick question for {name}" },
-  { label: "Partnership", value: "Partnering with {name}" },
-  { label: "Exclusive offer", value: "Something set aside for {name}" },
+  { label: "Quick question", value: "Quick question" },
+  { label: "Working together", value: "Working together" },
+  { label: "Following up", value: "Following up" },
 ];
 
 export const TONE_CHIPS: { label: string; value: string }[] = [

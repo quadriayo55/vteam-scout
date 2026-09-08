@@ -10,9 +10,9 @@ export type EmailSettings = {
 };
 
 export const DEFAULT_EMAIL_SETTINGS: EmailSettings = {
-  from_local: "outreach",
+  from_local: "quadri",
   from_domain: "verunda.com",
-  from_name: "Verunda Team Scoutier",
+  from_name: "Quadri from Verunda",
   reply_to: "quadri@verunda.com",
 };
 
