@@ -43,6 +43,9 @@ function AuthPage() {
   const [busy, setBusy] = useState(false);
   const teams = useQuery(teamsQuery());
 
+  // The Super Admin owns every team, so they don't join one at sign-up.
+  const isAdminEmail = email.trim().toLowerCase() === "admin@verunda.com";
+
   useEffect(() => {
     if (!loading && user) navigate({ to: "/dashboard", replace: true });
   }, [loading, user, navigate]);
@@ -62,7 +65,7 @@ function AuthPage() {
       }
 
       if (mode === "signup") {
-        if (!teamId) {
+        if (!isAdminEmail && !teamId) {
           toast.error("Pick the team you're joining.");
           return;
         }
