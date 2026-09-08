@@ -121,8 +121,7 @@ function AuthPage() {
           "verunda_pending_profile",
           JSON.stringify({ display_name: name.trim() }),
         );
-        toast.success("Account created — confirm your email, then sign in.");
-        setMode("signin");
+        setMode("check");
         return;
       }
 
@@ -130,10 +129,17 @@ function AuthPage() {
         email: email.trim(),
         password,
       });
-      if (error) throw error;
+      if (error) {
+        if (/email not confirmed/i.test(error.message)) {
+          setMode("check");
+          toast.error(friendlyAuthMessage(error.message));
+          return;
+        }
+        throw error;
+      }
       navigate({ to: "/dashboard", replace: true });
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Something went wrong.");
+      toast.error(error instanceof Error ? friendlyAuthMessage(error.message) : "Something went wrong.");
     } finally {
       setBusy(false);
     }
