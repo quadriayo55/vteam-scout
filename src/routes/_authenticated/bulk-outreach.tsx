@@ -345,7 +345,7 @@ function BulkOutreachPage() {
           total,
           batch_size: Math.max(1, Math.min(batchSize, 100)),
           gap_seconds: Math.max(0, Math.min(gapSeconds, 3600)),
-          daily_cap: Math.max(1, Math.min(dailyCap, 1000000)),
+          daily_cap: Math.max(1, Math.min(dailyCap, 5000)),
           status: "ready",
         })
         .select("id")
