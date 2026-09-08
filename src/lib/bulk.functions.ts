@@ -17,12 +17,6 @@ function personalize(template: string, name: string | null) {
   return (template ?? "").replaceAll("{name}", name?.trim() || "there");
 }
 
-function escapeHtml(value: string) {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-}
 
 /** Sends the next batch of a bulk send. The client calls this repeatedly, pacing with the send's gap. */
 export const sendBulkBatch = createServerFn({ method: "POST" })
