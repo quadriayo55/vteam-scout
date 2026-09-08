@@ -83,7 +83,26 @@ export const Route = createFileRoute("/_authenticated/bulk-outreach")({
   ),
 });
 
-type Recipient = { email: string; contact_name: string | null; domain: string | null };
+type Recipient = {
+  email: string;
+  contact_name: string | null;
+  domain: string | null;
+  brand: string | null;
+};
+
+const BRAND_HINTS = [
+  "brand",
+  "businessname",
+  "business",
+  "storename",
+  "store",
+  "shopname",
+  "shop",
+  "company",
+  "companyname",
+  "organisation",
+  "organization",
+];
 type Message = { subject: string; body: string };
 
 const SUBJECT_MAX = 200;
