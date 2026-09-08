@@ -1,15 +1,12 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
-import { teamsQuery } from "@/lib/stats";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
@@ -39,12 +36,8 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
-  const [teamId, setTeamId] = useState("");
   const [busy, setBusy] = useState(false);
-  const teams = useQuery(teamsQuery());
 
-  // The Super Admin owns every team, so they don't join one at sign-up.
-  const isAdminEmail = email.trim().toLowerCase() === "admin@verunda.com";
 
   useEffect(() => {
     if (!loading && user) navigate({ to: "/dashboard", replace: true });
@@ -65,10 +58,6 @@ function AuthPage() {
       }
 
       if (mode === "signup") {
-        if (!isAdminEmail && !teamId) {
-          toast.error("Pick the team you're joining.");
-          return;
-        }
         const { data, error } = await supabase.auth.signUp({
           email: email.trim(),
           password,
@@ -92,7 +81,6 @@ function AuthPage() {
             id: data.user.id,
             email: email.trim(),
             display_name: name.trim() || email.trim().split("@")[0] || "Scout",
-            team_id: teamId || null,
           });
           if (profileError) throw profileError;
           navigate({ to: "/dashboard", replace: true });
@@ -100,7 +88,7 @@ function AuthPage() {
         }
         window.localStorage.setItem(
           "verunda_pending_profile",
-          JSON.stringify({ display_name: name.trim(), team_id: teamId || null }),
+          JSON.stringify({ display_name: name.trim() }),
         );
         toast.success("Account created — confirm your email, then sign in.");
         setMode("signin");
@@ -129,15 +117,12 @@ function AuthPage() {
       <div className="panel w-full max-w-md p-6 sm:p-8">
         <h1 className="font-display text-2xl font-bold">
           {mode === "signin" && "Welcome back"}
-          {mode === "signup" && (isAdminEmail ? "Super Admin setup" : "Join your team")}
+          {mode === "signup" && "Create your account"}
           {mode === "forgot" && "Reset your password"}
         </h1>
         <p className="mt-1.5 text-sm text-muted-foreground">
           {mode === "signin" && "Sign in to your Scoutier workspace."}
-          {mode === "signup" &&
-            (isAdminEmail
-              ? "You oversee every team, so there's no team to pick."
-              : "Create an account and pick the team you belong to.")}
+          {mode === "signup" && "New accounts join as members — an admin can upgrade you later."}
           {mode === "forgot" && "We'll email you a link to set a new password."}
         </p>
 
@@ -182,25 +167,6 @@ function AuthPage() {
             </div>
           )}
 
-          {mode === "signup" && !isAdminEmail && (
-            <div className="space-y-2">
-              <Label>Team</Label>
-              <Select value={teamId} onValueChange={setTeamId}>
-                <SelectTrigger>
-                  <SelectValue
-                    placeholder={teams.isLoading ? "Loading teams…" : "Select your team"}
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  {(teams.data ?? []).map((team) => (
-                    <SelectItem key={team.id} value={team.id}>
-                      {team.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
 
           <Button type="submit" className="w-full" disabled={busy}>
             {busy && <Loader2 className="mr-2 size-4 animate-spin" />}
