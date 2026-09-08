@@ -1160,10 +1160,13 @@ function BulkOutreachPage() {
                 <li className="text-sm text-muted-foreground">No sends yet.</li>
               )}
               {(sends.data ?? []).map((row) => (
-                <li key={row.id}>
+                <li
+                  key={row.id}
+                  className="flex items-center gap-2 rounded-xl border border-border bg-surface/50 px-2 py-1.5"
+                >
                   <button
                     onClick={() => setActiveId(row.id)}
-                    className="flex w-full items-center justify-between gap-3 rounded-xl border border-border bg-surface/50 px-3 py-2 text-left text-sm transition-colors hover:bg-accent"
+                    className="flex min-w-0 flex-1 items-center justify-between gap-3 rounded-lg px-1 py-1 text-left text-sm transition-colors hover:bg-accent"
                   >
                     <span className="min-w-0">
                       <span className="block truncate font-semibold">{row.name}</span>
@@ -1173,6 +1176,25 @@ function BulkOutreachPage() {
                     </span>
                     <Send className="size-4 shrink-0 text-muted-foreground" />
                   </button>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    aria-label={`Delete ${row.name}`}
+                    title="Delete this send"
+                    disabled={removeSend.isPending}
+                    onClick={() => {
+                      if (
+                        window.confirm(
+                          `Delete "${row.name}"? This removes it from your sends list. Emails already sent cannot be recalled.`,
+                        )
+                      ) {
+                        removeSend.mutate(row.id);
+                      }
+                    }}
+                    className="shrink-0 text-muted-foreground hover:text-destructive"
+                  >
+                    <Trash2 className="size-4" />
+                  </Button>
                 </li>
               ))}
             </ul>
