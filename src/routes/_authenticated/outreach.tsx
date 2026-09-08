@@ -16,6 +16,15 @@ import {
   type Channel,
 } from "@/lib/outreach";
 import { parseFile, buildLinks, type ParsedFile } from "@/lib/parse";
+import { extractContacts, gradeList } from "@/lib/extract";
+import { writingAssist, type AssistMode } from "@/lib/ai.functions";
+import {
+  useTemplates,
+  STARTER_TEMPLATES,
+  SUBJECT_CHIPS,
+  TONE_CHIPS,
+  type TemplateRow,
+} from "@/lib/templates";
 import { formatWat } from "@/lib/wat";
 import { StatCard } from "@/components/StatCard";
 import { LiveIndicator } from "@/components/LiveIndicator";
@@ -26,6 +35,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -42,7 +58,13 @@ import {
   RefreshCw,
   Loader2,
   Search,
+  Sparkles,
+  Wand2,
+  ShieldCheck,
+  SpellCheck,
+  Gauge,
 } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
 
 export const Route = createFileRoute("/_authenticated/outreach")({
   head: () => ({
@@ -96,10 +118,16 @@ function OutreachPage() {
   const [processing, setProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
 
+  const [paste, setPaste] = useState("");
+  const [assist, setAssist] = useState<{ title: string; text: string } | null>(null);
+  const [assisting, setAssisting] = useState<AssistMode | null>(null);
+
   const [filter, setFilter] = useState<"all" | Channel>("all");
   const [page, setPage] = useState(0);
   const [search, setSearch] = useState("");
 
+  const runAssist = useServerFn(writingAssist);
+  const templates = useTemplates(user?.id);
   const totals = useQuery(totalsQuery({ userId: user?.id }, "all"));
 
   const links = useQuery({
@@ -125,6 +153,52 @@ function OutreachPage() {
 
   const spam = useMemo(() => spamCheck(`${subject} ${body}`), [subject, body]);
 
+  const pasted = useMemo(() => {
+    const found = extractContacts(paste);
+    const withNames = found.contacts.filter((item) => item.contact_name).length;
+    return {
+      ...found,
+      withNames,
+      grade: gradeList({
+        valid: found.contacts.length,
+        invalid: found.invalid,
+        duplicates: found.duplicates,
+        withNames,
+      }),
+    };
+  }, [paste]);
+
+  const pastedFile: ParsedFile | null = useMemo(() => {
+    if (pasted.contacts.length === 0) return null;
+    return {
+      fileName: "Pasted list",
+      headers: ["name", "email"],
+      rows: pasted.contacts.map((item) => [item.contact_name ?? "", item.email]),
+      columns: { name: 0, email: 1 },
+    };
+  }, [pasted.contacts]);
+
+  const shownTemplates: TemplateRow[] =
+    templates.data && templates.data.length > 0
+      ? templates.data
+      : STARTER_TEMPLATES.map((item, index) => ({ ...item, id: `starter-${index}` }));
+
+  async function callAssist(mode: AssistMode, title: string, text: string) {
+    if (!text.trim()) {
+      toast.error("Write something first.");
+      return;
+    }
+    setAssisting(mode);
+    try {
+      const result = await runAssist({ data: { mode, text } });
+      setAssist({ title, text: result.result });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "That tool could not run.");
+    } finally {
+      setAssisting(null);
+    }
+  }
+
   async function onFilesPicked(list: FileList | null) {
     if (!list?.length) return;
     try {
@@ -138,8 +212,9 @@ function OutreachPage() {
 
   async function generate() {
     if (!user) return;
-    if (!files.length) {
-      toast.error("Add at least one lead file.");
+    const sources = pastedFile ? [...files, pastedFile] : files;
+    if (!sources.length) {
+      toast.error("Add a lead file or paste some contacts.");
       return;
     }
     if (!selected.length) {
@@ -150,7 +225,7 @@ function OutreachPage() {
     setProgress(0);
     try {
       const result = buildLinks(
-        files,
+        sources,
         selected,
         { subject, body, whatsappMessage, useGmail },
         (email, name) =>
@@ -169,8 +244,8 @@ function OutreachPage() {
         .from("uploads")
         .insert({
           user_id: user.id,
-          file_name: files.map((f) => f.fileName).join(", ").slice(0, 300),
-          total_rows: files.reduce((sum, f) => sum + f.rows.length, 0),
+          file_name: sources.map((f) => f.fileName).join(", ").slice(0, 300),
+          total_rows: sources.reduce((sum, f) => sum + f.rows.length, 0),
           valid_rows: result.validRows,
         })
         .select("id")
@@ -206,6 +281,7 @@ function OutreachPage() {
       ].filter(Boolean);
       toast.success(notes.join(" · "));
       setFiles([]);
+      setPaste("");
       setPage(0);
       queryClient.invalidateQueries();
     } catch (error) {
