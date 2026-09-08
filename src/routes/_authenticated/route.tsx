@@ -37,6 +37,7 @@ const NAV = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/outreach", label: "Outreach Links", icon: Link2 },
   { to: "/campaigns", label: "Campaigns", icon: Megaphone },
+  { to: "/team-links", label: "Team Links", icon: Link2 },
   { to: "/analytics", label: "Analytics", icon: BarChart3 },
   { to: "/leaderboard", label: "Leaderboard", icon: Trophy },
   { to: "/team", label: "Team", icon: Users },

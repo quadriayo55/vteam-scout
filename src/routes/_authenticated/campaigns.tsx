@@ -53,6 +53,9 @@ type ProgressRow = {
   joined_at: string | null;
   generated: number;
   clicked: number;
+  link_opens: number;
+  last_open: string | null;
+  invite_code: string | null;
 };
 
 function todayWat() {
