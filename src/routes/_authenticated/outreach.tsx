@@ -761,6 +761,58 @@ function OutreachPage() {
           </div>
         )}
       </section>
+
+      <Dialog open={assist !== null} onOpenChange={(open) => !open && setAssist(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{assist?.title}</DialogTitle>
+            <DialogDescription>
+              Suggestion only — nothing changes until you apply it.
+            </DialogDescription>
+          </DialogHeader>
+          <p className="max-h-72 overflow-y-auto whitespace-pre-wrap rounded-xl border border-border bg-surface/50 p-4 text-sm">
+            {assist?.text}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              onClick={() => {
+                if (assist) setBody(assist.text);
+                setAssist(null);
+              }}
+            >
+              Use as email body
+            </Button>
+            <Button variant="outline" onClick={() => setAssist(null)}>
+              Close
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
+
+function Chip({
+  label,
+  onClick,
+  busy = false,
+  icon,
+}: {
+  label: string;
+  onClick: () => void;
+  busy?: boolean;
+  icon?: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={busy}
+      className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground"
+    >
+      {busy ? <Loader2 className="size-3 animate-spin" /> : icon}
+      {label}
+    </button>
+  );
+}
+
