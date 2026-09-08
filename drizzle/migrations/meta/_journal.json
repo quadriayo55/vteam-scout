@@ -113,6 +113,13 @@
       "when": 1788844886145,
       "tag": "0015_scoutier_parity_templates_rotation_streaks",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1788853945874,
+      "tag": "0016_scope_leader_reads_to_own_team",
+      "breakpoints": true
     }
   ]
 }
