@@ -125,6 +125,8 @@ function BulkOutreachPage() {
   const [newTemplate, setNewTemplate] = useState(false);
   const [templateName, setTemplateName] = useState("");
   const [templateCategory, setTemplateCategory] = useState<string>(TEMPLATE_CATEGORIES[0]);
+  const [templateSubject, setTemplateSubject] = useState("");
+  const [templateBody, setTemplateBody] = useState("");
 
   const templates = useTemplates(user?.id);
   const sender = emailSettings.data ?? DEFAULT_EMAIL_SETTINGS;
@@ -372,18 +374,22 @@ function BulkOutreachPage() {
     mutationFn: async () => {
       if (!user) throw new Error("Please sign in again.");
       if (!templateName.trim()) throw new Error("Give the template a name.");
+      if (!templateSubject.trim()) throw new Error("Add a subject line for the template.");
+      if (!templateBody.trim()) throw new Error("Add a message for the template.");
       const { error } = await supabase.from("email_templates").insert({
         user_id: user.id,
         name: templateName.trim(),
         category: templateCategory,
-        subject: current.subject,
-        body: current.body,
+        subject: templateSubject.trim(),
+        body: templateBody.trim(),
       });
       if (error) throw error;
     },
     onSuccess: () => {
       setNewTemplate(false);
       setTemplateName("");
+      setTemplateSubject("");
+      setTemplateBody("");
       void templates.refetch();
       toast.success("Template saved.");
     },
@@ -461,7 +467,7 @@ function BulkOutreachPage() {
         <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-brand">Bulk Outreach</p>
         <h1 className="font-display text-2xl font-bold sm:text-3xl">Fast mail send</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Paste anything with emails in it, write up to five rotating messages, and every email goes
+          Paste anything with emails in it, write up to ten rotating messages, and every email goes
           out personalised with <code className="rounded bg-muted px-1">{"{name}"}</code>.
         </p>
       </div>
@@ -546,7 +552,7 @@ function BulkOutreachPage() {
                   <Shuffle className="size-4 text-brand" /> Multi-message rotation
                 </h2>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Rotate up to five messages so consecutive emails don't carry the same subject and
+                  Rotate up to ten messages so consecutive emails don't carry the same subject and
                   body — this helps avoid repetitive-content flags at Gmail and Outlook.
                 </p>
               </div>
@@ -564,7 +570,7 @@ function BulkOutreachPage() {
               <div className="space-y-3 rounded-xl border border-border bg-surface/40 p-3">
                 <div className="flex flex-wrap items-center gap-2 text-xs">
                   <span className="text-muted-foreground">Messages:</span>
-                  {[2, 3, 4, 5].map((option) => (
+                  {[2, 3, 4, 5, 6, 7, 8, 9, 10].map((option) => (
                     <button
                       key={option}
                       type="button"
@@ -922,13 +928,36 @@ function BulkOutreachPage() {
                     />
                   ))}
                 </div>
-                <Button
-                  size="sm"
-                  onClick={() => saveTemplate.mutate()}
-                  disabled={saveTemplate.isPending}
-                >
-                  Save current message as template
-                </Button>
+                <Input
+                  value={templateSubject}
+                  onChange={(event) => setTemplateSubject(event.target.value)}
+                  placeholder="Subject line — use {name} for the contact's name"
+                />
+                <Textarea
+                  value={templateBody}
+                  onChange={(event) => setTemplateBody(event.target.value)}
+                  rows={7}
+                  placeholder="Write the message for this template. Use {name} where the contact's name should appear."
+                />
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    size="sm"
+                    onClick={() => saveTemplate.mutate()}
+                    disabled={saveTemplate.isPending}
+                  >
+                    Save template
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setTemplateSubject(current.subject);
+                      setTemplateBody(current.body);
+                    }}
+                  >
+                    Copy from message {activeMessage + 1}
+                  </Button>
+                </div>
               </div>
             )}
 
