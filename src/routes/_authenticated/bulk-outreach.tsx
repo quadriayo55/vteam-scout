@@ -41,9 +41,6 @@ type Recipient = { email: string; contact_name: string | null; domain: string | 
 
 const SUBJECT_MAX = 200;
 const BODY_MAX = 2000;
-const RESEND_FROM_NAME = "Verunda Team Scoutier";
-const RESEND_FROM_EMAIL = "outreach@verunda.com";
-const REPLY_TO_EMAIL = "quadri@verunda.com";
 
 function BulkOutreachPage() {
   const { user } = useAuth();
