@@ -1,0 +1,1 @@
+ALTER TABLE public.bulk_send_recipients ADD COLUMN IF NOT EXISTS brand text;
