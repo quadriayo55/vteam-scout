@@ -29,9 +29,10 @@ type Draft = {
   tiktok: string;
   linkedin: string;
   note: string;
+  source: string;
 };
 
-const HINTS: Record<keyof Omit<Draft, "note">, string[]> = {
+const HINTS: Record<keyof Omit<Draft, "note" | "source">, string[]> = {
   business_name: ["business", "company", "name", "brand", "store", "shop"],
   website: ["website", "site", "domain", "url", "web"],
   country: ["country", "location", "region"],
@@ -64,6 +65,7 @@ function emptyDraft(): Draft {
     tiktok: "",
     linkedin: "",
     note: "",
+    source: "",
   };
 }
 
@@ -79,6 +81,7 @@ function fromLookup(found: SiteLookup): Draft {
     tiktok: found.tiktok,
     linkedin: found.linkedin,
     note: found.note,
+    source: "Pasted list",
   };
 }
 
@@ -145,11 +148,11 @@ export function ProspectImport({
       const headers = headerRow.map((cell) => String(cell ?? "").trim());
       const index = Object.fromEntries(
         Object.entries(HINTS).map(([key, keys]) => [key, pick(headers, keys)]),
-      ) as Record<keyof Omit<Draft, "note">, number>;
+      ) as Record<keyof Omit<Draft, "note" | "source">, number>;
 
       const parsed: Draft[] = [];
       for (const row of rows) {
-        const value = (key: keyof Omit<Draft, "note">) =>
+        const value = (key: keyof Omit<Draft, "note" | "source">) =>
           index[key] >= 0 ? String(row[index[key]] ?? "").trim() : "";
         const draft: Draft = {
           ...emptyDraft(),
@@ -162,6 +165,7 @@ export function ProspectImport({
           facebook: value("facebook"),
           tiktok: value("tiktok"),
           linkedin: value("linkedin"),
+          source: file.name,
         };
         if (!draft.business_name && !draft.website && !draft.email) continue;
         if (!draft.business_name) draft.business_name = draft.website || draft.email;
@@ -227,6 +231,8 @@ export function ProspectImport({
     }
     setSaving(true);
     try {
+      const batchId =
+        typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : null;
       const rows = drafts.map((draft) => ({
         business_name: draft.business_name.slice(0, 120) || "Unnamed business",
         website: draft.website || null,
@@ -243,6 +249,8 @@ export function ProspectImport({
         assigned_to: assignedTo || null,
         campaign_id: campaignId || null,
         created_by: userId,
+        import_batch: batchId,
+        source_file: draft.source || "Pasted list",
       }));
       const { error } = await supabase.from("prospects").insert(rows);
       if (error) throw error;

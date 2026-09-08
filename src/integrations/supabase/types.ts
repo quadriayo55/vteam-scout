@@ -461,11 +461,13 @@ export type Database = {
           email: string | null
           facebook: string | null
           id: string
+          import_batch: string | null
           instagram: string | null
           linkedin: string | null
           notes: string | null
           phone: string | null
           score: number
+          source_file: string | null
           stage: string
           team_id: string | null
           tiktok: string | null
@@ -482,11 +484,13 @@ export type Database = {
           email?: string | null
           facebook?: string | null
           id?: string
+          import_batch?: string | null
           instagram?: string | null
           linkedin?: string | null
           notes?: string | null
           phone?: string | null
           score?: number
+          source_file?: string | null
           stage?: string
           team_id?: string | null
           tiktok?: string | null
@@ -503,11 +507,13 @@ export type Database = {
           email?: string | null
           facebook?: string | null
           id?: string
+          import_batch?: string | null
           instagram?: string | null
           linkedin?: string | null
           notes?: string | null
           phone?: string | null
           score?: number
+          source_file?: string | null
           stage?: string
           team_id?: string | null
           tiktok?: string | null

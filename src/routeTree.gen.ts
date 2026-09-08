@@ -20,6 +20,7 @@ import { Route as AuthenticatedBulkOutreachRouteImport } from './routes/_authent
 import { Route as AuthenticatedCampaignsRouteImport } from './routes/_authenticated/campaigns'
 import { Route as AuthenticatedConnectionsRouteImport } from './routes/_authenticated/connections'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedLeadFilesRouteImport } from './routes/_authenticated/lead-files'
 import { Route as AuthenticatedLeaderboardRouteImport } from './routes/_authenticated/leaderboard'
 import { Route as AuthenticatedOutreachRouteImport } from './routes/_authenticated/outreach'
 import { Route as AuthenticatedScoutingRouteImport } from './routes/_authenticated/scouting'
@@ -83,6 +84,11 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedLeadFilesRoute = AuthenticatedLeadFilesRouteImport.update({
+  id: '/lead-files',
+  path: '/lead-files',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedLeaderboardRoute =
   AuthenticatedLeaderboardRouteImport.update({
     id: '/leaderboard',
@@ -126,6 +132,7 @@ export interface FileRoutesByFullPath {
   '/campaigns': typeof AuthenticatedCampaignsRoute
   '/connections': typeof AuthenticatedConnectionsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/lead-files': typeof AuthenticatedLeadFilesRoute
   '/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/outreach': typeof AuthenticatedOutreachRoute
   '/scouting': typeof AuthenticatedScoutingRoute
@@ -144,6 +151,7 @@ export interface FileRoutesByTo {
   '/campaigns': typeof AuthenticatedCampaignsRoute
   '/connections': typeof AuthenticatedConnectionsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/lead-files': typeof AuthenticatedLeadFilesRoute
   '/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/outreach': typeof AuthenticatedOutreachRoute
   '/scouting': typeof AuthenticatedScoutingRoute
@@ -164,6 +172,7 @@ export interface FileRoutesById {
   '/_authenticated/campaigns': typeof AuthenticatedCampaignsRoute
   '/_authenticated/connections': typeof AuthenticatedConnectionsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/lead-files': typeof AuthenticatedLeadFilesRoute
   '/_authenticated/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/_authenticated/outreach': typeof AuthenticatedOutreachRoute
   '/_authenticated/scouting': typeof AuthenticatedScoutingRoute
@@ -184,6 +193,7 @@ export interface FileRouteTypes {
     | '/campaigns'
     | '/connections'
     | '/dashboard'
+    | '/lead-files'
     | '/leaderboard'
     | '/outreach'
     | '/scouting'
@@ -202,6 +212,7 @@ export interface FileRouteTypes {
     | '/campaigns'
     | '/connections'
     | '/dashboard'
+    | '/lead-files'
     | '/leaderboard'
     | '/outreach'
     | '/scouting'
@@ -221,6 +232,7 @@ export interface FileRouteTypes {
     | '/_authenticated/campaigns'
     | '/_authenticated/connections'
     | '/_authenticated/dashboard'
+    | '/_authenticated/lead-files'
     | '/_authenticated/leaderboard'
     | '/_authenticated/outreach'
     | '/_authenticated/scouting'
@@ -317,6 +329,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/lead-files': {
+      id: '/_authenticated/lead-files'
+      path: '/lead-files'
+      fullPath: '/lead-files'
+      preLoaderRoute: typeof AuthenticatedLeadFilesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/leaderboard': {
       id: '/_authenticated/leaderboard'
       path: '/leaderboard'
@@ -369,6 +388,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedCampaignsRoute: typeof AuthenticatedCampaignsRoute
   AuthenticatedConnectionsRoute: typeof AuthenticatedConnectionsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedLeadFilesRoute: typeof AuthenticatedLeadFilesRoute
   AuthenticatedLeaderboardRoute: typeof AuthenticatedLeaderboardRoute
   AuthenticatedOutreachRoute: typeof AuthenticatedOutreachRoute
   AuthenticatedScoutingRoute: typeof AuthenticatedScoutingRoute
@@ -383,6 +403,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCampaignsRoute: AuthenticatedCampaignsRoute,
   AuthenticatedConnectionsRoute: AuthenticatedConnectionsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedLeadFilesRoute: AuthenticatedLeadFilesRoute,
   AuthenticatedLeaderboardRoute: AuthenticatedLeaderboardRoute,
   AuthenticatedOutreachRoute: AuthenticatedOutreachRoute,
   AuthenticatedScoutingRoute: AuthenticatedScoutingRoute,
