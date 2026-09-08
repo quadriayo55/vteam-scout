@@ -298,6 +298,8 @@ export const sendDraftTest = createServerFn({ method: "POST" })
         subject: subject.slice(0, 200),
         body: body.slice(0, 2000),
         name: String(input?.name ?? "").trim() || null,
+        brand: String(input?.brand ?? "").trim() || null,
+        domain: String(input?.domain ?? "").trim() || null,
       };
     },
   )
