@@ -25,6 +25,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { CheckCircle2, Loader2, Mail, RefreshCw, Send, XCircle } from "lucide-react";
+import { RoleGate } from "@/components/RoleGate";
 
 export const Route = createFileRoute("/_authenticated/connections")({
   head: () => ({
@@ -42,7 +43,11 @@ export const Route = createFileRoute("/_authenticated/connections")({
       },
     ],
   }),
-  component: ConnectionsPage,
+  component: () => (
+    <RoleGate need="manageConnections">
+      <ConnectionsPage />
+    </RoleGate>
+  ),
 });
 
 function ConnectionsPage() {

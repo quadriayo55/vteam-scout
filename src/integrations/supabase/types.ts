@@ -293,6 +293,7 @@ export type Database = {
           is_active: boolean
           name: string
           starts_on: string
+          target: number
         }
         Insert: {
           created_at?: string
@@ -303,6 +304,7 @@ export type Database = {
           is_active?: boolean
           name: string
           starts_on?: string
+          target?: number
         }
         Update: {
           created_at?: string
@@ -313,6 +315,7 @@ export type Database = {
           is_active?: boolean
           name?: string
           starts_on?: string
+          target?: number
         }
         Relationships: []
       }
@@ -652,6 +655,13 @@ export type Database = {
           target: number
           team_id: string
           team_name: string
+        }[]
+      }
+      campaign_totals: {
+        Args: { _campaign_id: string }
+        Returns: {
+          clicked: number
+          generated: number
         }[]
       }
       can_view_user: { Args: { _user_id: string }; Returns: boolean }

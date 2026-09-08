@@ -4,7 +4,6 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, useProfile } from "@/lib/auth";
-import { teamsQuery } from "@/lib/stats";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -49,7 +48,6 @@ function SettingsPage() {
   const profile = useProfile();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const teams = useQuery(teamsQuery());
   const fileInput = useRef<HTMLInputElement>(null);
 
   const [name, setName] = useState("");
@@ -66,7 +64,6 @@ function SettingsPage() {
     }
   }, [profile.data]);
 
-  const teamName = teams.data?.find((team) => team.id === profile.data?.team_id)?.name ?? "No team";
 
   async function saveName() {
     if (!user || !name.trim()) {
@@ -208,11 +205,8 @@ function SettingsPage() {
             <Label>Email</Label>
             <Input value={profile.data?.email ?? user?.email ?? ""} readOnly disabled />
           </div>
-          <div className="space-y-2">
-            <Label>Team</Label>
-            <Input value={teamName} readOnly disabled />
-          </div>
         </div>
+
 
         <Button onClick={saveName} disabled={savingName}>
           {savingName && <Loader2 className="mr-2 size-4 animate-spin" />}

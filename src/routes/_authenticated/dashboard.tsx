@@ -52,7 +52,7 @@ function DashboardPage() {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-brand">
-            {roles.isSuperAdmin ? "Super Admin" : roles.isTeamLeader ? "Team Leader" : "Member"}
+            {roles.isSuperAdmin ? "Admin" : roles.isTeamLeader ? "Team Leader" : "Member"}
           </p>
           <h1 className="font-display text-2xl font-bold sm:text-3xl">
             Welcome back, {displayNameOf(profile.data, user?.email)}

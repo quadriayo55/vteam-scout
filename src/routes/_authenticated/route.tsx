@@ -2,7 +2,7 @@ import { createFileRoute, Link, Outlet, useNavigate } from "@tanstack/react-rout
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth, useProfile, useRoles, displayNameOf } from "@/lib/auth";
+import { useAuth, useProfile, usePermissions, displayNameOf } from "@/lib/auth";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -37,27 +37,35 @@ export const Route = createFileRoute("/_authenticated")({
   component: AuthenticatedLayout,
 });
 
-const NAV = [
+type NavPermission =
+  | "manageCampaigns"
+  | "manageProspects"
+  | "seeEveryonesStats"
+  | "sendBulkEmail"
+  | "manageConnections"
+  | "manageMembers";
+
+const NAV: { to: string; label: string; icon: typeof LayoutDashboard; need?: NavPermission }[] = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/outreach", label: "Outreach Links", icon: Link2 },
-  { to: "/bulk-outreach", label: "Bulk Outreach", icon: Send },
-  { to: "/connections", label: "Connections", icon: Plug },
-  { to: "/campaigns", label: "Campaigns", icon: Megaphone },
-  { to: "/team-links", label: "Team Links", icon: Link2 },
-  { to: "/scouting", label: "Scouting", icon: Radar },
-  { to: "/analytics", label: "Analytics", icon: BarChart3 },
-  { to: "/activity", label: "Activity Log", icon: History },
+  { to: "/bulk-outreach", label: "Bulk Outreach", icon: Send, need: "sendBulkEmail" },
+  { to: "/connections", label: "Connections", icon: Plug, need: "manageConnections" },
+  { to: "/campaigns", label: "Campaigns", icon: Megaphone, need: "manageCampaigns" },
+  { to: "/scouting", label: "Scouting", icon: Radar, need: "manageProspects" },
+  { to: "/analytics", label: "Analytics", icon: BarChart3, need: "seeEveryonesStats" },
+  { to: "/activity", label: "Activity Log", icon: History, need: "seeEveryonesStats" },
   { to: "/leaderboard", label: "Leaderboard", icon: Trophy },
-  { to: "/team", label: "Team", icon: Users },
+  { to: "/team", label: "Members", icon: Users, need: "seeEveryonesStats" },
   { to: "/settings", label: "Settings", icon: Settings },
-] as const;
+];
+
 
 function AuthenticatedLayout() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user, loading } = useAuth();
   const profile = useProfile();
-  const roles = useRoles();
+  const permissions = usePermissions();
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -68,7 +76,7 @@ function AuthenticatedLayout() {
   useEffect(() => {
     if (!user || profile.isLoading || profile.data) return;
     const raw = window.localStorage.getItem("verunda_pending_profile");
-    const pending = raw ? (JSON.parse(raw) as { display_name?: string; team_id?: string }) : {};
+    const pending = raw ? (JSON.parse(raw) as { display_name?: string }) : {};
     supabase
       .from("profiles")
       .insert({
@@ -76,7 +84,6 @@ function AuthenticatedLayout() {
         email: user.email ?? "",
         display_name:
           pending.display_name?.trim() || (user.email ?? "").split("@")[0] || "Scout",
-        team_id: pending.team_id ?? null,
       })
       .then(() => {
         window.localStorage.removeItem("verunda_pending_profile");
@@ -94,11 +101,9 @@ function AuthenticatedLayout() {
   }
 
   const name = displayNameOf(profile.data, user.email);
-  const roleLabel = roles.isSuperAdmin
-    ? "Super Admin"
-    : roles.isTeamLeader
-      ? "Team Leader"
-      : "Member";
+  const roleLabel = permissions.roleLabel;
+  const nav = NAV.filter((item) => !item.need || permissions[item.need]);
+
 
   async function signOut() {
     await supabase.auth.signOut();
@@ -149,7 +154,7 @@ function AuthenticatedLayout() {
           <Logo />
         </Link>
         <nav className="mt-8 space-y-1">
-          {NAV.map((item) => (
+          {nav.map((item) => (
             <NavItem key={item.to} {...item} />
           ))}
         </nav>
@@ -171,7 +176,7 @@ function AuthenticatedLayout() {
 
         {open && (
           <nav className="space-y-1 border-b border-border bg-surface/80 p-3 lg:hidden">
-            {NAV.map((item) => (
+            {nav.map((item) => (
               <NavItem key={item.to} {...item} onNavigate={() => setOpen(false)} />
             ))}
           </nav>

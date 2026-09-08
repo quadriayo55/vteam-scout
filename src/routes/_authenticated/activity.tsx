@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/select";
 import { formatWat } from "@/lib/wat";
 import { Users, MousePointerClick, Send, AlertTriangle, History } from "lucide-react";
+import { RoleGate } from "@/components/RoleGate";
 
 export const Route = createFileRoute("/_authenticated/activity")({
   head: () => ({
@@ -33,7 +34,11 @@ export const Route = createFileRoute("/_authenticated/activity")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  component: ActivityPage,
+  component: () => (
+    <RoleGate need="seeEveryonesStats">
+      <ActivityPage />
+    </RoleGate>
+  ),
 });
 
 const KINDS = {

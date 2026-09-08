@@ -183,7 +183,6 @@ function OutreachPage() {
         const batch = result.links.slice(i, i + BATCH).map((link) => ({
           ...link,
           user_id: user.id,
-          team_id: profile.data?.team_id ?? null,
           upload_id: upload.id,
         }));
         const { error, count } = await supabase

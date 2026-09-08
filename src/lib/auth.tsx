@@ -81,13 +81,35 @@ export function useRoles() {
     },
   });
   const roles = query.data ?? [];
+  const isSuperAdmin = roles.includes("super_admin");
+  const isTeamLeader = !isSuperAdmin && roles.includes("team_leader");
   return {
     roles,
-    isSuperAdmin: roles.includes("super_admin"),
-    isTeamLeader: roles.includes("team_leader"),
+    isSuperAdmin,
+    isTeamLeader,
+    isMember: !isSuperAdmin && !isTeamLeader,
     loading: query.isLoading,
   };
 }
+
+/** What each role is allowed to do. Admin = everything, Leader = some, Member = own work. */
+export function usePermissions() {
+  const { isSuperAdmin, isTeamLeader, isMember, loading } = useRoles();
+  return {
+    loading,
+    isSuperAdmin,
+    isTeamLeader,
+    isMember,
+    roleLabel: isSuperAdmin ? "Admin" : isTeamLeader ? "Team Leader" : "Member",
+    manageCampaigns: isSuperAdmin || isTeamLeader,
+    manageProspects: isSuperAdmin || isTeamLeader,
+    seeEveryonesStats: isSuperAdmin || isTeamLeader,
+    sendBulkEmail: isSuperAdmin,
+    manageConnections: isSuperAdmin,
+    manageMembers: isSuperAdmin,
+  };
+}
+
 
 export function displayNameOf(profile: Profile | null | undefined, fallbackEmail?: string | null) {
   const name = profile?.display_name?.trim();
