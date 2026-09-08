@@ -29,6 +29,13 @@
       "when": 1788828077734,
       "tag": "0003_avatar_storage_policies",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1788829343072,
+      "tag": "0004_create_campaigns",
+      "breakpoints": true
     }
   ]
 }
