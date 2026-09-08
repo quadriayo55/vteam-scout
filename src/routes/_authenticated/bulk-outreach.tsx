@@ -264,13 +264,29 @@ function BulkOutreachPage() {
       }
       const nameIndex = parsed.columns.name;
       const domainIndex = parsed.columns.domain;
+      const norm = (value: string) => value.toLowerCase().replace(/[^a-z0-9]/g, "");
+      const brandIndex = parsed.headers.findIndex((header, index) => {
+        if (index === nameIndex || index === emailIndex || index === domainIndex) return false;
+        const h = norm(header);
+        return Boolean(h) && BRAND_HINTS.some((hint) => h === hint || h.includes(hint));
+      });
       const rows: Recipient[] = parsed.rows.map((row) => ({
         email: (row[emailIndex] ?? "").trim(),
         contact_name: nameIndex !== undefined ? (row[nameIndex] ?? "").trim() || null : null,
         domain: domainIndex !== undefined ? (row[domainIndex] ?? "").trim() || null : null,
+        brand: brandIndex >= 0 ? (row[brandIndex] ?? "").trim() || null : null,
       }));
       setFileRecipients((currentRows) => [...currentRows, ...rows]);
-      toast.success(`${rows.length.toLocaleString()} rows read from ${file.name}`);
+      const found = [
+        nameIndex !== undefined ? "names" : null,
+        brandIndex >= 0 ? "brand / store names" : null,
+        domainIndex !== undefined ? "store links" : null,
+      ].filter(Boolean);
+      toast.success(
+        `${rows.length.toLocaleString()} rows read from ${file.name}${
+          found.length ? ` — ${found.join(", ")} picked up` : ""
+        }`,
+      );
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "That file could not be read.");
     } finally {
