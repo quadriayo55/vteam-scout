@@ -27,7 +27,16 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
-type Mode = "signin" | "signup" | "forgot";
+type Mode = "signin" | "signup" | "forgot" | "check";
+
+function friendlyAuthMessage(message: string) {
+  if (/email not confirmed/i.test(message))
+    return "Your email isn't confirmed yet — open the confirmation link we emailed you, or resend it below.";
+  if (/invalid login credentials/i.test(message)) return "That email and password don't match.";
+  if (/known to be weak|password should be/i.test(message))
+    return "Please choose a stronger password — at least 8 characters with a mix of letters and numbers.";
+  return message;
+}
 
 function AuthPage() {
   const navigate = useNavigate();
