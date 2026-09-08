@@ -92,7 +92,7 @@ export const sendBulkBatch = createServerFn({ method: "POST" })
     const fromHeader = send.from_name
       ? `${send.from_name} <${send.from_email}>`
       : send.from_email;
-    const replyTo = send.reply_to ?? null;
+    const replyTo = send.reply_to?.trim() || "quadri@verunda.com";
 
     let sent = 0;
     let failed = 0;
@@ -120,7 +120,7 @@ export const sendBulkBatch = createServerFn({ method: "POST" })
             subject,
             html,
             text,
-            ...(replyTo ? { reply_to: replyTo } : {}),
+            reply_to: replyTo,
           }),
         });
 

@@ -41,7 +41,11 @@ export function useEmailSettings() {
         .eq("user_id", user!.id)
         .maybeSingle();
       if (error) throw error;
-      return data ?? DEFAULT_EMAIL_SETTINGS;
+      if (!data) return DEFAULT_EMAIL_SETTINGS;
+      return {
+        ...data,
+        reply_to: data.reply_to?.trim() || DEFAULT_EMAIL_SETTINGS.reply_to,
+      };
     },
   });
 }
