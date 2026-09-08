@@ -366,6 +366,7 @@ function BulkOutreachPage() {
             email: item.email,
             contact_name: item.contact_name,
             domain: item.domain,
+            brand: item.brand,
             variant: picked,
           };
         });
