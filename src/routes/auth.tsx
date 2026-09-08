@@ -92,7 +92,7 @@ function AuthPage() {
             id: data.user.id,
             email: email.trim(),
             display_name: name.trim() || email.trim().split("@")[0] || "Scout",
-            team_id: teamId,
+            team_id: teamId || null,
           });
           if (profileError) throw profileError;
           navigate({ to: "/dashboard", replace: true });
@@ -100,7 +100,7 @@ function AuthPage() {
         }
         window.localStorage.setItem(
           "verunda_pending_profile",
-          JSON.stringify({ display_name: name.trim(), team_id: teamId }),
+          JSON.stringify({ display_name: name.trim(), team_id: teamId || null }),
         );
         toast.success("Account created — confirm your email, then sign in.");
         setMode("signin");
