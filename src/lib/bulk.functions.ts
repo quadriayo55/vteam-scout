@@ -278,6 +278,8 @@ export const sendDraftTest = createServerFn({ method: "POST" })
       subject: string;
       body: string;
       name?: string | undefined;
+      brand?: string | undefined;
+      domain?: string | undefined;
     }) => {
       const to = String(input?.to ?? "").trim();
       const fromEmail = String(input?.fromEmail ?? "").trim();
