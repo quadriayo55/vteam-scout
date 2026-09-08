@@ -14,8 +14,34 @@ export type BatchResult = {
 };
 
 function personalize(template: string, name: string | null) {
-  return (template ?? "").replaceAll("{name}", name?.trim() || "there");
+  const clean = name?.trim() ?? "";
+  const text = (template ?? "").replaceAll("{name}", clean || "there");
+  // Without a real name, "Hi there," is natural but "Partnering with there" is not.
+  return clean
+    ? text
+    : text
+        .replace(/\b(with|for|to|at)\s+there\b/gi, (_m, word: string) => `${word} you`)
+        .replace(/\bthere's\b/gi, "there's");
 }
+
+/**
+ * Subject lines are the strongest signal Gmail uses to file mail under Promotions.
+ * Strip the marketing punctuation that trips it: dashes used as separators,
+ * exclamation marks, shouted words and emoji.
+ */
+function inboxSubject(subject: string) {
+  return subject
+    .replace(/[\u2010-\u2015]/g, ",")
+    .replace(/\s+-\s+/g, ", ")
+    .replace(/[!]+/g, "")
+    .replace(/[\p{Extended_Pictographic}\u2600-\u27BF]/gu, "")
+    .replace(/\b[A-Z]{4,}\b/g, (word) => word[0] + word.slice(1).toLowerCase())
+    .replace(/\s{2,}/g, " ")
+    .replace(/\s+,/g, ",")
+    .trim()
+    .slice(0, 120);
+}
+
 
 
 /** Sends the next batch of a bulk send. The client calls this repeatedly, pacing with the send's gap. */
@@ -105,8 +131,11 @@ export const sendBulkBatch = createServerFn({ method: "POST" })
 
     for (const recipient of recipients ?? []) {
       const variant = variants[recipient.variant ?? 0];
-      const subject = personalize(variant?.subject || send.subject, recipient.contact_name);
+      const subject = inboxSubject(
+        personalize(variant?.subject || send.subject, recipient.contact_name),
+      );
       const text = personalize(variant?.body || send.body, recipient.contact_name);
+
 
       try {
         const response = await fetch(`${GATEWAY_URL}/emails`, {
@@ -237,8 +266,9 @@ export const sendDraftTest = createServerFn({ method: "POST" })
     const resendKey = process.env["RESEND_API_KEY"];
     if (!lovableKey || !resendKey) throw new Error("Email sending is not connected yet.");
 
-    const subject = personalize(data.subject, data.name);
+    const subject = inboxSubject(personalize(data.subject, data.name));
     const text = personalize(data.body, data.name);
+
 
     const response = await fetch(`${GATEWAY_URL}/emails`, {
       method: "POST",
