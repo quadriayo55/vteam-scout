@@ -570,7 +570,7 @@ function BulkOutreachPage() {
               <div className="space-y-3 rounded-xl border border-border bg-surface/40 p-3">
                 <div className="flex flex-wrap items-center gap-2 text-xs">
                   <span className="text-muted-foreground">Messages:</span>
-                  {[2, 3, 4, 5].map((option) => (
+                  {[2, 3, 4, 5, 6, 7, 8, 9, 10].map((option) => (
                     <button
                       key={option}
                       type="button"
