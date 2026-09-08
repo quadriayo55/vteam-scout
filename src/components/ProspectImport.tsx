@@ -32,7 +32,7 @@ type Draft = {
   source: string;
 };
 
-const HINTS: Record<keyof Omit<Draft, "note">, string[]> = {
+const HINTS: Record<keyof Omit<Draft, "note" | "source">, string[]> = {
   business_name: ["business", "company", "name", "brand", "store", "shop"],
   website: ["website", "site", "domain", "url", "web"],
   country: ["country", "location", "region"],
@@ -148,11 +148,11 @@ export function ProspectImport({
       const headers = headerRow.map((cell) => String(cell ?? "").trim());
       const index = Object.fromEntries(
         Object.entries(HINTS).map(([key, keys]) => [key, pick(headers, keys)]),
-      ) as Record<keyof Omit<Draft, "note">, number>;
+      ) as Record<keyof Omit<Draft, "note" | "source">, number>;
 
       const parsed: Draft[] = [];
       for (const row of rows) {
-        const value = (key: keyof Omit<Draft, "note">) =>
+        const value = (key: keyof Omit<Draft, "note" | "source">) =>
           index[key] >= 0 ? String(row[index[key]] ?? "").trim() : "";
         const draft: Draft = {
           ...emptyDraft(),
