@@ -37,20 +37,28 @@ export const Route = createFileRoute("/_authenticated")({
   component: AuthenticatedLayout,
 });
 
-const NAV = [
+type NavPermission =
+  | "manageCampaigns"
+  | "manageProspects"
+  | "seeEveryonesStats"
+  | "sendBulkEmail"
+  | "manageConnections"
+  | "manageMembers";
+
+const NAV: { to: string; label: string; icon: typeof LayoutDashboard; need?: NavPermission }[] = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/outreach", label: "Outreach Links", icon: Link2 },
-  { to: "/bulk-outreach", label: "Bulk Outreach", icon: Send },
-  { to: "/connections", label: "Connections", icon: Plug },
-  { to: "/campaigns", label: "Campaigns", icon: Megaphone },
-  { to: "/team-links", label: "Team Links", icon: Link2 },
-  { to: "/scouting", label: "Scouting", icon: Radar },
-  { to: "/analytics", label: "Analytics", icon: BarChart3 },
-  { to: "/activity", label: "Activity Log", icon: History },
+  { to: "/bulk-outreach", label: "Bulk Outreach", icon: Send, need: "sendBulkEmail" },
+  { to: "/connections", label: "Connections", icon: Plug, need: "manageConnections" },
+  { to: "/campaigns", label: "Campaigns", icon: Megaphone, need: "manageCampaigns" },
+  { to: "/scouting", label: "Scouting", icon: Radar, need: "manageProspects" },
+  { to: "/analytics", label: "Analytics", icon: BarChart3, need: "seeEveryonesStats" },
+  { to: "/activity", label: "Activity Log", icon: History, need: "seeEveryonesStats" },
   { to: "/leaderboard", label: "Leaderboard", icon: Trophy },
-  { to: "/team", label: "Team", icon: Users },
+  { to: "/team", label: "Members", icon: Users, need: "seeEveryonesStats" },
   { to: "/settings", label: "Settings", icon: Settings },
-] as const;
+];
+
 
 function AuthenticatedLayout() {
   const navigate = useNavigate();
