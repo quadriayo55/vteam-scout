@@ -8,6 +8,13 @@
       "when": 1788827640319,
       "tag": "0000_verunda_core_schema",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1788827654393,
+      "tag": "0001_auto_role_assignment",
+      "breakpoints": true
     }
   ]
 }
