@@ -19,8 +19,13 @@ export const recordInviteClick = createServerFn({ method: "POST" })
       .parse(data),
   )
   .handler(async ({ data }): Promise<InviteClickResult> => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: rows, error } = await supabaseAdmin.rpc("record_invite_click", {
+    const { createClient } = await import("@supabase/supabase-js");
+    const client = createClient(
+      process.env["SUPABASE_URL"]!,
+      process.env["SUPABASE_PUBLISHABLE_KEY"]!,
+      { auth: { persistSession: false, autoRefreshToken: false } },
+    );
+    const { data: rows, error } = await client.rpc("record_invite_click", {
       _code: data.code,
       ...(data.referrer ? { _referrer: data.referrer } : {}),
       ...(data.userAgent ? { _user_agent: data.userAgent } : {}),
