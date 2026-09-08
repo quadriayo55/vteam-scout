@@ -14,16 +14,198 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      outreach_links: {
+        Row: {
+          channel: Database["public"]["Enums"]["outreach_channel"]
+          clicked_at: string | null
+          contact_handle: string
+          contact_name: string | null
+          created_at: string
+          id: string
+          raw_row: Json | null
+          source_file: string | null
+          team_id: string | null
+          upload_id: string | null
+          url: string
+          user_id: string
+        }
+        Insert: {
+          channel: Database["public"]["Enums"]["outreach_channel"]
+          clicked_at?: string | null
+          contact_handle: string
+          contact_name?: string | null
+          created_at?: string
+          id?: string
+          raw_row?: Json | null
+          source_file?: string | null
+          team_id?: string | null
+          upload_id?: string | null
+          url: string
+          user_id: string
+        }
+        Update: {
+          channel?: Database["public"]["Enums"]["outreach_channel"]
+          clicked_at?: string | null
+          contact_handle?: string
+          contact_name?: string | null
+          created_at?: string
+          id?: string
+          raw_row?: Json | null
+          source_file?: string | null
+          team_id?: string | null
+          upload_id?: string | null
+          url?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outreach_links_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outreach_links_upload_id_fkey"
+            columns: ["upload_id"]
+            isOneToOne: false
+            referencedRelation: "uploads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          display_name: string
+          email: string
+          id: string
+          is_active: boolean
+          team_id: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string
+          email: string
+          id: string
+          is_active?: boolean
+          team_id?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string
+          email?: string
+          id?: string
+          is_active?: boolean
+          team_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      teams: {
+        Row: {
+          created_at: string
+          id: string
+          leader_email: string | null
+          leader_id: string | null
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          leader_email?: string | null
+          leader_id?: string | null
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          leader_email?: string | null
+          leader_id?: string | null
+          name?: string
+        }
+        Relationships: []
+      }
+      uploads: {
+        Row: {
+          created_at: string
+          file_name: string
+          id: string
+          total_rows: number
+          user_id: string
+          valid_rows: number
+        }
+        Insert: {
+          created_at?: string
+          file_name: string
+          id?: string
+          total_rows?: number
+          user_id: string
+          valid_rows?: number
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          id?: string
+          total_rows?: number
+          user_id?: string
+          valid_rows?: number
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_super_admin: { Args: never; Returns: boolean }
+      leads_team: { Args: { _team_id: string }; Returns: boolean }
+      my_team_id: { Args: never; Returns: string }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "member" | "team_leader" | "super_admin"
+      outreach_channel:
+        | "email"
+        | "whatsapp"
+        | "facebook"
+        | "instagram"
+        | "tiktok"
+        | "linkedin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +332,16 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["member", "team_leader", "super_admin"],
+      outreach_channel: [
+        "email",
+        "whatsapp",
+        "facebook",
+        "instagram",
+        "tiktok",
+        "linkedin",
+      ],
+    },
   },
 } as const
