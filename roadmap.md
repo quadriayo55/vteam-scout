@@ -10,6 +10,8 @@
 - Settings: display name, profile photo, password change, deactivate account
 
 - Campaigns: create campaigns, per-team targets, team sign-ups, automatic progress (done)
+- Team Links: unique tracked link per team + campaign, counts every open, signs the team up automatically; opens shown on campaign cards
+- First real campaign created: September Shopify Push (8–30 Sep 2026), Alpha 500 / Bravo 300 / Charlie 300, Team Alpha signed up
 
 ## Open
 - Verunda Team AI: personalised message generator + conclusion message + deal-closed toggle + chat revisions

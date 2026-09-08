@@ -20,6 +20,8 @@ import { Route as AuthenticatedLeaderboardRouteImport } from './routes/_authenti
 import { Route as AuthenticatedOutreachRouteImport } from './routes/_authenticated/outreach'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedTeamRouteImport } from './routes/_authenticated/team'
+import { Route as AuthenticatedTeamLinksRouteImport } from './routes/_authenticated/team-links'
+import { Route as JCodeRouteImport } from './routes/j.$code'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -76,6 +78,16 @@ const AuthenticatedTeamRoute = AuthenticatedTeamRouteImport.update({
   path: '/team',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedTeamLinksRoute = AuthenticatedTeamLinksRouteImport.update({
+  id: '/team-links',
+  path: '/team-links',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const JCodeRoute = JCodeRouteImport.update({
+  id: '/j/$code',
+  path: '/j/$code',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -88,6 +100,8 @@ export interface FileRoutesByFullPath {
   '/outreach': typeof AuthenticatedOutreachRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/team': typeof AuthenticatedTeamRoute
+  '/team-links': typeof AuthenticatedTeamLinksRoute
+  '/j/$code': typeof JCodeRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -100,6 +114,8 @@ export interface FileRoutesByTo {
   '/outreach': typeof AuthenticatedOutreachRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/team': typeof AuthenticatedTeamRoute
+  '/team-links': typeof AuthenticatedTeamLinksRoute
+  '/j/$code': typeof JCodeRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -114,6 +130,8 @@ export interface FileRoutesById {
   '/_authenticated/outreach': typeof AuthenticatedOutreachRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/team': typeof AuthenticatedTeamRoute
+  '/_authenticated/team-links': typeof AuthenticatedTeamLinksRoute
+  '/j/$code': typeof JCodeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -128,6 +146,8 @@ export interface FileRouteTypes {
     | '/outreach'
     | '/settings'
     | '/team'
+    | '/team-links'
+    | '/j/$code'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -140,6 +160,8 @@ export interface FileRouteTypes {
     | '/outreach'
     | '/settings'
     | '/team'
+    | '/team-links'
+    | '/j/$code'
   id:
     | '__root__'
     | '/'
@@ -153,6 +175,8 @@ export interface FileRouteTypes {
     | '/_authenticated/outreach'
     | '/_authenticated/settings'
     | '/_authenticated/team'
+    | '/_authenticated/team-links'
+    | '/j/$code'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -160,6 +184,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  JCodeRoute: typeof JCodeRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -241,6 +266,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTeamRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/team-links': {
+      id: '/_authenticated/team-links'
+      path: '/team-links'
+      fullPath: '/team-links'
+      preLoaderRoute: typeof AuthenticatedTeamLinksRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/j/$code': {
+      id: '/j/$code'
+      path: '/j/$code'
+      fullPath: '/j/$code'
+      preLoaderRoute: typeof JCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -252,6 +291,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedOutreachRoute: typeof AuthenticatedOutreachRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedTeamRoute: typeof AuthenticatedTeamRoute
+  AuthenticatedTeamLinksRoute: typeof AuthenticatedTeamLinksRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -262,6 +302,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedOutreachRoute: AuthenticatedOutreachRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedTeamRoute: AuthenticatedTeamRoute,
+  AuthenticatedTeamLinksRoute: AuthenticatedTeamLinksRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -272,6 +313,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  JCodeRoute: JCodeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

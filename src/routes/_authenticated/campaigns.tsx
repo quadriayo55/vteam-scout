@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, useProfile, useRoles } from "@/lib/auth";
 import { teamsQuery } from "@/lib/stats";
-import { formatWatDay } from "@/lib/wat";
+import { formatWat, formatWatDay } from "@/lib/wat";
 import { compact } from "@/lib/outreach";
 import { LiveIndicator } from "@/components/LiveIndicator";
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Switch } from "@/components/ui/switch";
-import { Megaphone, Plus, RefreshCw, Trash2, Users, Target, Check } from "lucide-react";
+import {
+  Megaphone,
+  Plus,
+  RefreshCw,
+  Trash2,
+  Users,
+  Target,
+  Check,
+  MousePointerClick,
+} from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/campaigns")({
   head: () => ({
@@ -53,6 +62,9 @@ type ProgressRow = {
   joined_at: string | null;
   generated: number;
   clicked: number;
+  link_opens: number;
+  last_open: string | null;
+  invite_code: string | null;
 };
 
 function todayWat() {
@@ -310,7 +322,7 @@ function CampaignCard({
     queryKey: ["campaign-progress", campaign.id],
     refetchInterval: 20000,
     queryFn: async (): Promise<ProgressRow[]> => {
-      const { data, error } = await supabase.rpc("campaign_progress", {
+      const { data, error } = await supabase.rpc("campaign_engagement", {
         _campaign_id: campaign.id,
       });
       if (error) throw error;
@@ -326,9 +338,10 @@ function CampaignCard({
           target: acc.target + Number(row.target ?? 0),
           generated: acc.generated + Number(row.generated ?? 0),
           clicked: acc.clicked + Number(row.clicked ?? 0),
+          opens: acc.opens + Number(row.link_opens ?? 0),
           signed: acc.signed + (row.joined_at ? 1 : 0),
         }),
-        { target: 0, generated: 0, clicked: 0, signed: 0 },
+        { target: 0, generated: 0, clicked: 0, opens: 0, signed: 0 },
       ),
     [rows],
   );
@@ -452,11 +465,16 @@ function CampaignCard({
         </div>
       </div>
 
-      <div className="mt-4 grid gap-3 sm:grid-cols-4">
+      <div className="mt-4 grid gap-3 sm:grid-cols-5">
         <Metric label="Teams signed up" value={`${totals.signed}/${rows.length}`} icon={<Users className="size-4" />} />
         <Metric label="Total target" value={compact(totals.target)} icon={<Target className="size-4" />} />
         <Metric label="Generated" value={compact(totals.generated)} />
         <Metric label="Clicked" value={compact(totals.clicked)} />
+        <Metric
+          label="Link opens"
+          value={compact(totals.opens)}
+          icon={<MousePointerClick className="size-4" />}
+        />
       </div>
 
       <Progress value={pct} className="mt-4" />
@@ -478,7 +496,10 @@ function CampaignCard({
                   <p className="truncate text-sm font-semibold">{row.team_name}</p>
                   <p className="text-xs text-muted-foreground">
                     {generated.toLocaleString()} of {target.toLocaleString()} ·{" "}
-                    {Number(row.clicked ?? 0).toLocaleString()} clicked
+                    {Number(row.clicked ?? 0).toLocaleString()} clicked ·{" "}
+                    {Number(row.link_opens ?? 0).toLocaleString()} link open
+                    {Number(row.link_opens ?? 0) === 1 ? "" : "s"}
+                    {row.last_open ? ` · last ${formatWat(row.last_open)}` : ""}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
