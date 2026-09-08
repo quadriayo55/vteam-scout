@@ -2,6 +2,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/resend";
+const RESEND_FROM = "Verunda Team Scoutier <outreach@verunda.com>";
+const REPLY_TO = "quadri@verunda.com";
 
 export type BatchResult = {
   sent: number;
@@ -108,12 +110,13 @@ export const sendBulkBatch = createServerFn({ method: "POST" })
             "X-Connection-Api-Key": resendKey,
           },
           body: JSON.stringify({
-            from: `${send.from_name} <${send.from_email}>`,
+            // Resend requires a sender on the verified domain. Replies always go to Quadri's inbox.
+            from: RESEND_FROM,
             to: [recipient.email],
             subject,
             html,
             text,
-            ...(send.reply_to ? { reply_to: send.reply_to } : {}),
+            reply_to: REPLY_TO,
           }),
         });
 
