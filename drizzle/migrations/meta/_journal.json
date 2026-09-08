@@ -57,6 +57,13 @@
       "when": 1788829957182,
       "tag": "0007_fix_record_invite_click_conflict",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1788837567081,
+      "tag": "0008_bulk_outreach_and_extras",
+      "breakpoints": true
     }
   ]
 }

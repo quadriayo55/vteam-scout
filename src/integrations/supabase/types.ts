@@ -14,6 +14,127 @@ export type Database = {
   }
   public: {
     Tables: {
+      bulk_send_recipients: {
+        Row: {
+          contact_name: string | null
+          created_at: string
+          domain: string | null
+          email: string
+          error: string | null
+          id: string
+          provider_id: string | null
+          send_id: string
+          sent_at: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          contact_name?: string | null
+          created_at?: string
+          domain?: string | null
+          email: string
+          error?: string | null
+          id?: string
+          provider_id?: string | null
+          send_id: string
+          sent_at?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          contact_name?: string | null
+          created_at?: string
+          domain?: string | null
+          email?: string
+          error?: string | null
+          id?: string
+          provider_id?: string | null
+          send_id?: string
+          sent_at?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bulk_send_recipients_send_id_fkey"
+            columns: ["send_id"]
+            isOneToOne: false
+            referencedRelation: "bulk_sends"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bulk_sends: {
+        Row: {
+          batch_size: number
+          body: string
+          created_at: string
+          daily_cap: number
+          failed: number
+          from_email: string
+          from_name: string
+          gap_seconds: number
+          id: string
+          name: string
+          reply_to: string | null
+          sent: number
+          status: string
+          subject: string
+          team_id: string | null
+          total: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          batch_size?: number
+          body: string
+          created_at?: string
+          daily_cap?: number
+          failed?: number
+          from_email: string
+          from_name: string
+          gap_seconds?: number
+          id?: string
+          name: string
+          reply_to?: string | null
+          sent?: number
+          status?: string
+          subject: string
+          team_id?: string | null
+          total?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          batch_size?: number
+          body?: string
+          created_at?: string
+          daily_cap?: number
+          failed?: number
+          from_email?: string
+          from_name?: string
+          gap_seconds?: number
+          id?: string
+          name?: string
+          reply_to?: string | null
+          sent?: number
+          status?: string
+          subject?: string
+          team_id?: string | null
+          total?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bulk_sends_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       campaign_invite_clicks: {
         Row: {
           campaign_id: string
@@ -264,6 +385,7 @@ export type Database = {
           id: string
           is_active: boolean
           team_id: string | null
+          timezone: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -273,6 +395,7 @@ export type Database = {
           id: string
           is_active?: boolean
           team_id?: string | null
+          timezone?: string | null
         }
         Update: {
           avatar_url?: string | null
@@ -282,6 +405,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           team_id?: string | null
+          timezone?: string | null
         }
         Relationships: [
           {
@@ -457,6 +581,7 @@ export type Database = {
         | "instagram"
         | "tiktok"
         | "linkedin"
+        | "domain"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -592,6 +717,7 @@ export const Constants = {
         "instagram",
         "tiktok",
         "linkedin",
+        "domain",
       ],
     },
   },
