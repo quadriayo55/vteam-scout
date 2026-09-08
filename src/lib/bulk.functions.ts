@@ -130,7 +130,7 @@ export const sendBulkBatch = createServerFn({ method: "POST" })
     const take = Math.min(send.batch_size, capLeft);
     const { data: recipients, error: recipientError } = await supabase
       .from("bulk_send_recipients")
-      .select("id, email, contact_name, variant")
+      .select("id, email, contact_name, variant, brand, domain")
       .eq("send_id", send.id)
       .eq("status", "pending")
       .order("created_at", { ascending: true })
