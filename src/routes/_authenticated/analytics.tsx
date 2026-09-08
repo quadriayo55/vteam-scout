@@ -10,6 +10,7 @@ import { LiveIndicator } from "@/components/LiveIndicator";
 import { formatWatDay } from "@/lib/wat";
 import { Link2, MousePointerClick, Clock, Target } from "lucide-react";
 import { RoleGate } from "@/components/RoleGate";
+import { StreaksBadges } from "@/components/StreaksBadges";
 
 export const Route = createFileRoute("/_authenticated/analytics")({
   head: () => ({
@@ -95,6 +96,8 @@ function AnalyticsPage() {
           loading={totals.isLoading}
         />
       </div>
+
+      <StreaksBadges userId={user?.id} />
 
       <CampaignOpensChart />
 

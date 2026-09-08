@@ -82,7 +82,7 @@ export const sendBulkBatch = createServerFn({ method: "POST" })
     const take = Math.min(send.batch_size, capLeft);
     const { data: recipients, error: recipientError } = await supabase
       .from("bulk_send_recipients")
-      .select("id, email, contact_name")
+      .select("id, email, contact_name, variant")
       .eq("send_id", send.id)
       .eq("status", "pending")
       .order("created_at", { ascending: true })
@@ -94,16 +94,29 @@ export const sendBulkBatch = createServerFn({ method: "POST" })
       : send.from_email;
     const replyTo = send.reply_to?.trim() || "quadri@verunda.com";
 
+    const rawVariants = Array.isArray(send.variants) ? send.variants : [];
+    const variants = rawVariants
+      .map((item) => {
+        const record = (item ?? {}) as { subject?: unknown; body?: unknown };
+        return {
+          subject: String(record.subject ?? "").trim(),
+          body: String(record.body ?? "").trim(),
+        };
+      })
+      .filter((item) => item.subject || item.body);
+
     let sent = 0;
     let failed = 0;
     const errors: string[] = [];
 
     for (const recipient of recipients ?? []) {
-      const subject = personalize(send.subject, recipient.contact_name);
-      const text = personalize(send.body, recipient.contact_name);
+      const variant = variants[recipient.variant ?? 0];
+      const subject = personalize(variant?.subject || send.subject, recipient.contact_name);
+      const text = personalize(variant?.body || send.body, recipient.contact_name);
       const html = `<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6">${escapeHtml(
         text,
       ).replace(/\n/g, "<br />")}</div>`;
+
 
       try {
         const response = await fetch(`${GATEWAY_URL}/emails`, {
@@ -189,4 +202,79 @@ export const sendBulkBatch = createServerFn({ method: "POST" })
       status,
       errors,
     };
+  });
+
+/** Sends one copy of the drafted message to the sender's own inbox, so it can be checked first. */
+export const sendDraftTest = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (input: {
+      to: string;
+      fromName: string;
+      fromEmail: string;
+      replyTo?: string | undefined;
+      subject: string;
+      body: string;
+      name?: string | undefined;
+    }) => {
+      const to = String(input?.to ?? "").trim();
+      const fromEmail = String(input?.fromEmail ?? "").trim();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) throw new Error("Enter a valid test address.");
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fromEmail))
+        throw new Error("The sender address is not valid.");
+      const subject = String(input?.subject ?? "").trim();
+      const body = String(input?.body ?? "").trim();
+      if (!subject) throw new Error("Add a subject line first.");
+      if (!body) throw new Error("Add a message first.");
+      return {
+        to,
+        fromEmail,
+        fromName: String(input?.fromName ?? "").trim() || "Verunda",
+        replyTo: String(input?.replyTo ?? "").trim() || "quadri@verunda.com",
+        subject: subject.slice(0, 200),
+        body: body.slice(0, 2000),
+        name: String(input?.name ?? "").trim() || null,
+      };
+    },
+  )
+  .handler(async ({ data }): Promise<{ id: string | null }> => {
+    const lovableKey = process.env["LOVABLE_API_KEY"];
+    const resendKey = process.env["RESEND_API_KEY"];
+    if (!lovableKey || !resendKey) throw new Error("Email sending is not connected yet.");
+
+    const subject = personalize(data.subject, data.name);
+    const text = personalize(data.body, data.name);
+    const html = `<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6">${escapeHtml(
+      text,
+    ).replace(/\n/g, "<br />")}</div>`;
+
+    const response = await fetch(`${GATEWAY_URL}/emails`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${lovableKey}`,
+        "X-Connection-Api-Key": resendKey,
+      },
+      body: JSON.stringify({
+        from: `${data.fromName} <${data.fromEmail}>`,
+        to: [data.to],
+        subject: `[TEST] ${subject}`,
+        html,
+        text,
+        reply_to: data.replyTo,
+      }),
+    });
+
+    const bodyText = await response.text();
+    if (!response.ok) {
+      console.error(`[draft-test] failed [${response.status}]: ${bodyText}`);
+      throw new Error(`Test email failed [${response.status}]: ${bodyText.slice(0, 300)}`);
+    }
+    let id: string | null = null;
+    try {
+      id = (JSON.parse(bodyText) as { id?: string }).id ?? null;
+    } catch {
+      id = null;
+    }
+    return { id };
   });
