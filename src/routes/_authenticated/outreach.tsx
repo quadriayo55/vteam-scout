@@ -425,6 +425,42 @@ function OutreachPage() {
               </ul>
             )}
 
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <Label htmlFor="paste">Or paste contacts</Label>
+                <Badge variant="secondary" className="gap-1">
+                  <Sparkles className="size-3" /> Smart extraction
+                </Badge>
+              </div>
+              <Textarea
+                id="paste"
+                rows={4}
+                value={paste}
+                onChange={(event) => setPaste(event.target.value)}
+                placeholder={'Paste anything — one per line, comma soup, or "Jane Doe <jane@shop.com>"'}
+              />
+              <div className="flex flex-wrap items-center gap-2 text-xs">
+                <Badge variant="secondary">{compact(pasted.contacts.length)} valid</Badge>
+                <Badge variant="outline">{compact(pasted.duplicates)} duplicates removed</Badge>
+                <Badge variant="outline">{compact(pasted.invalid)} unusable</Badge>
+                <Badge variant="outline">{compact(pasted.withNames)} with names</Badge>
+                {paste.trim().length > 0 && (
+                  <Button type="button" size="sm" variant="ghost" onClick={() => setPaste("")}>
+                    <Trash2 className="mr-1.5 size-3.5" /> Clear
+                  </Button>
+                )}
+              </div>
+              <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-surface/50 p-3">
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-brand/15 font-display text-base font-bold text-brand">
+                  {pasted.grade.grade}
+                </span>
+                <span className="min-w-0 text-xs">
+                  <span className="block font-semibold">List quality {pasted.grade.score}/100</span>
+                  <span className="block text-muted-foreground">{pasted.grade.note}</span>
+                </span>
+              </div>
+            </div>
+
             <div>
               <Label>Channels to generate</Label>
               <div className="mt-2 flex flex-wrap gap-2">
@@ -462,6 +498,17 @@ function OutreachPage() {
                 value={subject}
                 onChange={(event) => setSubject(event.target.value)}
               />
+              <div className="flex flex-wrap gap-2">
+                {SUBJECT_CHIPS.map((chip) => (
+                  <Chip key={chip.label} label={chip.label} onClick={() => setSubject(chip.value)} />
+                ))}
+                <Chip
+                  label="Analyse subject"
+                  busy={assisting === "subject"}
+                  icon={<Gauge className="size-3" />}
+                  onClick={() => void callAssist("subject", "Subject line review", subject)}
+                />
+              </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="body">Email body</Label>
@@ -483,7 +530,85 @@ function OutreachPage() {
                   </span>
                 )}
               </p>
+              <div className="flex flex-wrap gap-2">
+                {TONE_CHIPS.map((chip) => (
+                  <Chip key={chip.label} label={chip.label} onClick={() => setBody(chip.value)} />
+                ))}
+              </div>
             </div>
+
+            <div className="space-y-2 rounded-xl border border-border bg-surface/40 p-3">
+              <p className="flex items-center gap-2 text-sm font-semibold">
+                <Wand2 className="size-4 text-brand" /> Writing tools
+              </p>
+              <div className="grid gap-2 sm:grid-cols-3">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  disabled={assisting !== null}
+                  onClick={() => void callAssist("grammar", "Grammar check", body)}
+                >
+                  {assisting === "grammar" ? (
+                    <Loader2 className="mr-2 size-3.5 animate-spin" />
+                  ) : (
+                    <SpellCheck className="mr-2 size-3.5" />
+                  )}
+                  Grammar
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  disabled={assisting !== null}
+                  onClick={() =>
+                    void callAssist("spam", "Spam trigger check", `${subject}\n\n${body}`)
+                  }
+                >
+                  {assisting === "spam" ? (
+                    <Loader2 className="mr-2 size-3.5 animate-spin" />
+                  ) : (
+                    <ShieldCheck className="mr-2 size-3.5" />
+                  )}
+                  Spam triggers
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  disabled={assisting !== null}
+                  onClick={() => void callAssist("rephrase", "Rewritten message", body)}
+                >
+                  {assisting === "rephrase" ? (
+                    <Loader2 className="mr-2 size-3.5 animate-spin" />
+                  ) : (
+                    <Sparkles className="mr-2 size-3.5" />
+                  )}
+                  Rephrase
+                </Button>
+              </div>
+            </div>
+
+            <div className="space-y-2 rounded-xl border border-border bg-surface/40 p-3">
+              <p className="text-sm font-semibold">Templates</p>
+              <div className="flex flex-wrap gap-2">
+                {shownTemplates.map((item) => (
+                  <Chip
+                    key={item.id}
+                    label={item.name}
+                    onClick={() => {
+                      setSubject(item.subject);
+                      setBody(item.body);
+                      toast.success(`"${item.name}" loaded.`);
+                    }}
+                  />
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Save your own templates on the Bulk Outreach page — they show up here too.
+              </p>
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="wa">WhatsApp message</Label>
               <Textarea
