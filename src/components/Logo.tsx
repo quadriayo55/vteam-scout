@@ -1,22 +1,30 @@
 import { cn } from "@/lib/utils";
-import { Crosshair } from "lucide-react";
+import lockupAsset from "@/assets/verunda-lockup.png.asset.json";
+import markAsset from "@/assets/verunda-mark.png.asset.json";
 
 export function Logo({ className, compact }: { className?: string; compact?: boolean }) {
-  return (
-    <span className={cn("flex items-center gap-2.5", className)}>
-      <span className="relative flex size-9 shrink-0 items-center justify-center rounded-xl bg-brand text-brand-foreground shadow-lg shadow-brand/25">
-        <Crosshair className="size-5" strokeWidth={2.4} />
+  if (compact) {
+    return (
+      <span className={cn("flex items-center", className)}>
+        <img
+          src={markAsset.url}
+          alt="Verunda Team Scoutier"
+          className="h-9 w-auto shrink-0 object-contain"
+        />
       </span>
-      {!compact && (
-        <span className="leading-none">
-          <span className="block font-display text-[15px] font-bold tracking-tight">
-            Verunda
-          </span>
-          <span className="block text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-            Team Scoutier
-          </span>
-        </span>
-      )}
+    );
+  }
+
+  return (
+    <span className={cn("flex flex-col items-start gap-1", className)}>
+      <img
+        src={lockupAsset.url}
+        alt="Verunda"
+        className="h-6 w-auto object-contain object-left"
+      />
+      <span className="pl-0.5 text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+        Team Scoutier
+      </span>
     </span>
   );
 }
