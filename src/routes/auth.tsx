@@ -27,7 +27,16 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
-type Mode = "signin" | "signup" | "forgot";
+type Mode = "signin" | "signup" | "forgot" | "check";
+
+function friendlyAuthMessage(message: string) {
+  if (/email not confirmed/i.test(message))
+    return "Your email isn't confirmed yet — open the confirmation link we emailed you, or resend it below.";
+  if (/invalid login credentials/i.test(message)) return "That email and password don't match.";
+  if (/known to be weak|password should be/i.test(message))
+    return "Please choose a stronger password — at least 8 characters with a mix of letters and numbers.";
+  return message;
+}
 
 function AuthPage() {
   const navigate = useNavigate();
@@ -37,6 +46,28 @@ function AuthPage() {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
+  const [resending, setResending] = useState(false);
+
+  async function resendConfirmation() {
+    if (!email.trim()) {
+      toast.error("Enter your email first.");
+      return;
+    }
+    setResending(true);
+    try {
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email: email.trim(),
+        options: { emailRedirectTo: `${window.location.origin}/dashboard` },
+      });
+      if (error) throw error;
+      toast.success("Confirmation email sent — check your inbox and spam folder.");
+    } catch (error) {
+      toast.error(error instanceof Error ? friendlyAuthMessage(error.message) : "Couldn't resend it.");
+    } finally {
+      setResending(false);
+    }
+  }
 
 
   useEffect(() => {
@@ -90,8 +121,7 @@ function AuthPage() {
           "verunda_pending_profile",
           JSON.stringify({ display_name: name.trim() }),
         );
-        toast.success("Account created — confirm your email, then sign in.");
-        setMode("signin");
+        setMode("check");
         return;
       }
 
@@ -99,13 +129,48 @@ function AuthPage() {
         email: email.trim(),
         password,
       });
-      if (error) throw error;
+      if (error) {
+        if (/email not confirmed/i.test(error.message)) {
+          setMode("check");
+          toast.error(friendlyAuthMessage(error.message));
+          return;
+        }
+        throw error;
+      }
       navigate({ to: "/dashboard", replace: true });
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Something went wrong.");
+      toast.error(error instanceof Error ? friendlyAuthMessage(error.message) : "Something went wrong.");
     } finally {
       setBusy(false);
     }
+  }
+
+  if (mode === "check") {
+    return (
+      <main className="flex min-h-screen flex-col items-center justify-center px-4 py-10">
+        <Link to="/" className="mb-8">
+          <Logo />
+        </Link>
+        <div className="panel w-full max-w-md p-6 sm:p-8">
+          <h1 className="font-display text-2xl font-bold">Check your inbox</h1>
+          <p className="mt-1.5 text-sm text-muted-foreground">
+            We sent a confirmation link to{" "}
+            <span className="font-semibold text-foreground">{email.trim() || "your email"}</span>.
+            Open it to finish setting up your account, then come back and sign in. It can take a
+            minute to arrive — check your spam folder too.
+          </p>
+          <div className="mt-6 space-y-3">
+            <Button className="w-full" onClick={resendConfirmation} disabled={resending}>
+              {resending && <Loader2 className="mr-2 size-4 animate-spin" />}
+              Resend confirmation email
+            </Button>
+            <Button variant="secondary" className="w-full" onClick={() => setMode("signin")}>
+              Back to sign in
+            </Button>
+          </div>
+        </div>
+      </main>
+    );
   }
 
   return (
@@ -113,6 +178,7 @@ function AuthPage() {
       <Link to="/" className="mb-8">
         <Logo />
       </Link>
+
 
       <div className="panel w-full max-w-md p-6 sm:p-8">
         <h1 className="font-display text-2xl font-bold">
