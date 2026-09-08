@@ -22,6 +22,13 @@
       "when": 1788827769964,
       "tag": "0002_outreach_stats_functions",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1788828077734,
+      "tag": "0003_avatar_storage_policies",
+      "breakpoints": true
     }
   ]
 }
