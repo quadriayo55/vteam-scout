@@ -9,6 +9,8 @@
 - Team: roster, member drill-down, super-admin team creation, role assignment, member moves, data wipes
 - Settings: display name, profile photo, password change, deactivate account
 
+- Campaigns: create campaigns, per-team targets, team sign-ups, automatic progress (done)
+
 ## Open
 - Verunda Team AI: personalised message generator + conclusion message + deal-closed toggle + chat revisions
 - PC AutoScoutier: import outreach links as Gmail compose links
