@@ -145,11 +145,40 @@ function AuthPage() {
     }
   }
 
+  if (mode === "check") {
+    return (
+      <main className="flex min-h-screen flex-col items-center justify-center px-4 py-10">
+        <Link to="/" className="mb-8">
+          <Logo />
+        </Link>
+        <div className="panel w-full max-w-md p-6 sm:p-8">
+          <h1 className="font-display text-2xl font-bold">Check your inbox</h1>
+          <p className="mt-1.5 text-sm text-muted-foreground">
+            We sent a confirmation link to{" "}
+            <span className="font-semibold text-foreground">{email.trim() || "your email"}</span>.
+            Open it to finish setting up your account, then come back and sign in. It can take a
+            minute to arrive — check your spam folder too.
+          </p>
+          <div className="mt-6 space-y-3">
+            <Button className="w-full" onClick={resendConfirmation} disabled={resending}>
+              {resending && <Loader2 className="mr-2 size-4 animate-spin" />}
+              Resend confirmation email
+            </Button>
+            <Button variant="secondary" className="w-full" onClick={() => setMode("signin")}>
+              Back to sign in
+            </Button>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="flex min-h-screen flex-col items-center justify-center px-4 py-10">
       <Link to="/" className="mb-8">
         <Logo />
       </Link>
+
 
       <div className="panel w-full max-w-md p-6 sm:p-8">
         <h1 className="font-display text-2xl font-bold">
