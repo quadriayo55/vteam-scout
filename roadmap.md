@@ -16,9 +16,14 @@
 - Bulk Outreach: real email sending through Resend, per-send pacing (batch size, gap, daily limit), live progress, spam check, paste or file recipients
 - Domain column in lead files + Domain channel, Top domains + Live activity panels, "Your usage" panel, per-person timezone for activity times
 
+- Prospect Scouting page: business, website, country, contacts, fit score, stage, team/scout/campaign assignment, search + filters
+- Activity Log: team sign-ups, campaign link opens and every email sent/failed in one filterable timeline
+- Campaign link-opens chart on Analytics
+- Faster page switching (pages pre-load on hover, data kept warm)
+- Real bulk send confirmed delivered from quadri@verunda.com to quadriayo55@gmail.com
+
 ## Open
 - Verunda Team AI: personalised message generator + conclusion message + deal-closed toggle + chat revisions
 - PC AutoScoutier: import outreach links as Gmail compose links
-- Verify a sending domain in Resend so bulk emails deliver from your own address
 - Send verification/reset emails from "Verunda Team Scoutier" branding
 - Replace the text wordmark with the real logo (waiting on the logo file from you)
