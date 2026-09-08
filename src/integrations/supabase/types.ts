@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       bulk_send_recipients: {
         Row: {
+          brand: string | null
           contact_name: string | null
           created_at: string
           domain: string | null
@@ -30,6 +31,7 @@ export type Database = {
           variant: number
         }
         Insert: {
+          brand?: string | null
           contact_name?: string | null
           created_at?: string
           domain?: string | null
@@ -44,6 +46,7 @@ export type Database = {
           variant?: number
         }
         Update: {
+          brand?: string | null
           contact_name?: string | null
           created_at?: string
           domain?: string | null

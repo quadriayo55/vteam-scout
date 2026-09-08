@@ -83,7 +83,26 @@ export const Route = createFileRoute("/_authenticated/bulk-outreach")({
   ),
 });
 
-type Recipient = { email: string; contact_name: string | null; domain: string | null };
+type Recipient = {
+  email: string;
+  contact_name: string | null;
+  domain: string | null;
+  brand: string | null;
+};
+
+const BRAND_HINTS = [
+  "brand",
+  "businessname",
+  "business",
+  "storename",
+  "store",
+  "shopname",
+  "shop",
+  "company",
+  "companyname",
+  "organisation",
+  "organization",
+];
 type Message = { subject: string; body: string };
 
 const SUBJECT_MAX = 200;
@@ -114,7 +133,7 @@ function BulkOutreachPage() {
   const [startWith, setStartWith] = useState(0);
   const [batchSize, setBatchSize] = useState(20);
   const [gapSeconds, setGapSeconds] = useState(60);
-  const [dailyCap, setDailyCap] = useState(500);
+  const [dailyCap, setDailyCap] = useState(5000);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
   const [parsing, setParsing] = useState(false);
@@ -153,7 +172,7 @@ function BulkOutreachPage() {
     };
 
     pasted.contacts.forEach((item) =>
-      push({ email: item.email, contact_name: item.contact_name, domain: null }),
+      push({ email: item.email, contact_name: item.contact_name, domain: null, brand: null }),
     );
     fileRecipients.forEach(push);
 
@@ -245,13 +264,29 @@ function BulkOutreachPage() {
       }
       const nameIndex = parsed.columns.name;
       const domainIndex = parsed.columns.domain;
+      const norm = (value: string) => value.toLowerCase().replace(/[^a-z0-9]/g, "");
+      const brandIndex = parsed.headers.findIndex((header, index) => {
+        if (index === nameIndex || index === emailIndex || index === domainIndex) return false;
+        const h = norm(header);
+        return Boolean(h) && BRAND_HINTS.some((hint) => h === hint || h.includes(hint));
+      });
       const rows: Recipient[] = parsed.rows.map((row) => ({
         email: (row[emailIndex] ?? "").trim(),
         contact_name: nameIndex !== undefined ? (row[nameIndex] ?? "").trim() || null : null,
         domain: domainIndex !== undefined ? (row[domainIndex] ?? "").trim() || null : null,
+        brand: brandIndex >= 0 ? (row[brandIndex] ?? "").trim() || null : null,
       }));
       setFileRecipients((currentRows) => [...currentRows, ...rows]);
-      toast.success(`${rows.length.toLocaleString()} rows read from ${file.name}`);
+      const found = [
+        nameIndex !== undefined ? "names" : null,
+        brandIndex >= 0 ? "brand / store names" : null,
+        domainIndex !== undefined ? "store links" : null,
+      ].filter(Boolean);
+      toast.success(
+        `${rows.length.toLocaleString()} rows read from ${file.name}${
+          found.length ? ` — ${found.join(", ")} picked up` : ""
+        }`,
+      );
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "That file could not be read.");
     } finally {
@@ -310,7 +345,7 @@ function BulkOutreachPage() {
           total,
           batch_size: Math.max(1, Math.min(batchSize, 100)),
           gap_seconds: Math.max(0, Math.min(gapSeconds, 3600)),
-          daily_cap: Math.max(1, Math.min(dailyCap, 1000000)),
+          daily_cap: Math.max(1, Math.min(dailyCap, 5000)),
           status: "ready",
         })
         .select("id")
@@ -331,6 +366,7 @@ function BulkOutreachPage() {
             email: item.email,
             contact_name: item.contact_name,
             domain: item.domain,
+            brand: item.brand,
             variant: picked,
           };
         });
@@ -362,6 +398,8 @@ function BulkOutreachPage() {
           subject: current.subject,
           body: current.body,
           name: stats.recipients[0]?.contact_name ?? "there",
+          brand: stats.recipients[0]?.brand ?? undefined,
+          domain: stats.recipients[0]?.domain ?? undefined,
         },
       });
     },
@@ -369,6 +407,27 @@ function BulkOutreachPage() {
     onError: (error) =>
       toast.error(error instanceof Error ? error.message : "That test could not be sent."),
   });
+
+  const removeSend = useMutation({
+    mutationFn: async (id: string) => {
+      const { error: rowsError } = await supabase
+        .from("bulk_send_recipients")
+        .delete()
+        .eq("send_id", id);
+      if (rowsError) throw rowsError;
+      const { error } = await supabase.from("bulk_sends").delete().eq("id", id);
+      if (error) throw error;
+      return id;
+    },
+    onSuccess: (id) => {
+      if (activeId === id) setActiveId(null);
+      queryClient.invalidateQueries({ queryKey: ["bulk-sends"] });
+      toast.success("Send deleted.");
+    },
+    onError: (error) =>
+      toast.error(error instanceof Error ? error.message : "That send could not be deleted."),
+  });
+
 
   const saveTemplate = useMutation({
     mutationFn: async () => {
@@ -727,7 +786,9 @@ function BulkOutreachPage() {
               </div>
               <SpamHint level={bodySpam.level} hits={bodySpam.hits} />
               <p className="text-xs text-brand">
-                Personalisation on — <code>{"{name}"}</code> becomes each contact's name.
+                Personalisation on — <code>{"{name}"}</code> becomes the contact's name,{" "}
+                <code>{"{brand}"}</code> the brand or store name, and <code>{"{website}"}</code> the
+                store link from your file.
               </p>
             </div>
 
@@ -855,6 +916,11 @@ function BulkOutreachPage() {
                   value={batchSize}
                   onChange={(event) => setBatchSize(Number(event.target.value) || 1)}
                 />
+                <p className="text-xs text-muted-foreground">
+                  How many emails go out in one go before the app pauses. With {batchSize} per batch,
+                  a list of 1,000 people is sent in small groups of {batchSize} rather than all at
+                  once — this looks natural and protects your sending reputation.
+                </p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="gap">Gap between batches (seconds)</Label>
@@ -866,6 +932,10 @@ function BulkOutreachPage() {
                   value={gapSeconds}
                   onChange={(event) => setGapSeconds(Number(event.target.value) || 0)}
                 />
+                <p className="text-xs text-muted-foreground">
+                  Waiting time before the next {batchSize} go out — roughly{" "}
+                  {compact(Math.round((batchSize * 3600) / Math.max(gapSeconds, 1)))} emails an hour.
+                </p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="cap">Daily limit</Label>
@@ -873,9 +943,15 @@ function BulkOutreachPage() {
                   id="cap"
                   type="number"
                   min={1}
+                  max={5000}
                   value={dailyCap}
-                  onChange={(event) => setDailyCap(Number(event.target.value) || 1)}
+                  onChange={(event) =>
+                    setDailyCap(Math.min(Number(event.target.value) || 1, 5000))
+                  }
                 />
+                <p className="text-xs text-muted-foreground">
+                  Most you'll send in one day — up to 5,000. Anything left over waits for tomorrow.
+                </p>
               </div>
             </div>
             <Button
@@ -1101,10 +1177,13 @@ function BulkOutreachPage() {
                 <li className="text-sm text-muted-foreground">No sends yet.</li>
               )}
               {(sends.data ?? []).map((row) => (
-                <li key={row.id}>
+                <li
+                  key={row.id}
+                  className="flex items-center gap-2 rounded-xl border border-border bg-surface/50 px-2 py-1.5"
+                >
                   <button
                     onClick={() => setActiveId(row.id)}
-                    className="flex w-full items-center justify-between gap-3 rounded-xl border border-border bg-surface/50 px-3 py-2 text-left text-sm transition-colors hover:bg-accent"
+                    className="flex min-w-0 flex-1 items-center justify-between gap-3 rounded-lg px-1 py-1 text-left text-sm transition-colors hover:bg-accent"
                   >
                     <span className="min-w-0">
                       <span className="block truncate font-semibold">{row.name}</span>
@@ -1114,6 +1193,25 @@ function BulkOutreachPage() {
                     </span>
                     <Send className="size-4 shrink-0 text-muted-foreground" />
                   </button>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    aria-label={`Delete ${row.name}`}
+                    title="Delete this send"
+                    disabled={removeSend.isPending}
+                    onClick={() => {
+                      if (
+                        window.confirm(
+                          `Delete "${row.name}"? This removes it from your sends list. Emails already sent cannot be recalled.`,
+                        )
+                      ) {
+                        removeSend.mutate(row.id);
+                      }
+                    }}
+                    className="shrink-0 text-muted-foreground hover:text-destructive"
+                  >
+                    <Trash2 className="size-4" />
+                  </Button>
                 </li>
               ))}
             </ul>

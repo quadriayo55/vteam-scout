@@ -120,6 +120,13 @@
       "when": 1788853945874,
       "tag": "0016_scope_leader_reads_to_own_team",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1788904636023,
+      "tag": "0017_bulk_recipient_brand",
+      "breakpoints": true
     }
   ]
 }

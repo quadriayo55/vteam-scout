@@ -13,9 +13,37 @@ export type BatchResult = {
   errors: string[];
 };
 
-function personalize(template: string, name: string | null) {
+/** Turns "https://www.shop-name.myshopify.com/" into "Shop Name". */
+function brandFromDomain(domain: string | null) {
+  const host = (domain ?? "")
+    .trim()
+    .replace(/^https?:\/\//i, "")
+    .replace(/^www\./i, "")
+    .replace(/\/.*$/, "");
+  if (!host) return "";
+  const first = host.split(".")[0] ?? "";
+  return first
+    .replace(/[-_]+/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase())
+    .trim();
+}
+
+function personalize(
+  template: string,
+  name: string | null,
+  brand?: string | null,
+  domain?: string | null,
+) {
   const clean = name?.trim() ?? "";
-  const text = (template ?? "").replaceAll("{name}", clean || "there");
+  const site = (domain ?? "").trim().replace(/^https?:\/\//i, "").replace(/\/+$/, "");
+  const store = (brand ?? "").trim() || brandFromDomain(domain ?? null) || site || "your store";
+  const text = (template ?? "")
+    .replaceAll("{brand}", store)
+    .replaceAll("{store}", store)
+    .replaceAll("{company}", store)
+    .replaceAll("{website}", site || store)
+    .replaceAll("{domain}", site || store)
+    .replaceAll("{name}", clean || "there");
   // Without a real name, "Hi there," is natural but "Partnering with there" is not.
   return clean
     ? text
@@ -102,7 +130,7 @@ export const sendBulkBatch = createServerFn({ method: "POST" })
     const take = Math.min(send.batch_size, capLeft);
     const { data: recipients, error: recipientError } = await supabase
       .from("bulk_send_recipients")
-      .select("id, email, contact_name, variant")
+      .select("id, email, contact_name, variant, brand, domain")
       .eq("send_id", send.id)
       .eq("status", "pending")
       .order("created_at", { ascending: true })
@@ -132,9 +160,19 @@ export const sendBulkBatch = createServerFn({ method: "POST" })
     for (const recipient of recipients ?? []) {
       const variant = variants[recipient.variant ?? 0];
       const subject = inboxSubject(
-        personalize(variant?.subject || send.subject, recipient.contact_name),
+        personalize(
+          variant?.subject || send.subject,
+          recipient.contact_name,
+          recipient.brand,
+          recipient.domain,
+        ),
       );
-      const text = personalize(variant?.body || send.body, recipient.contact_name);
+      const text = personalize(
+        variant?.body || send.body,
+        recipient.contact_name,
+        recipient.brand,
+        recipient.domain,
+      );
 
 
       try {
@@ -240,6 +278,8 @@ export const sendDraftTest = createServerFn({ method: "POST" })
       subject: string;
       body: string;
       name?: string | undefined;
+      brand?: string | undefined;
+      domain?: string | undefined;
     }) => {
       const to = String(input?.to ?? "").trim();
       const fromEmail = String(input?.fromEmail ?? "").trim();
@@ -258,6 +298,8 @@ export const sendDraftTest = createServerFn({ method: "POST" })
         subject: subject.slice(0, 200),
         body: body.slice(0, 2000),
         name: String(input?.name ?? "").trim() || null,
+        brand: String(input?.brand ?? "").trim() || null,
+        domain: String(input?.domain ?? "").trim() || null,
       };
     },
   )
@@ -266,8 +308,8 @@ export const sendDraftTest = createServerFn({ method: "POST" })
     const resendKey = process.env["RESEND_API_KEY"];
     if (!lovableKey || !resendKey) throw new Error("Email sending is not connected yet.");
 
-    const subject = inboxSubject(personalize(data.subject, data.name));
-    const text = personalize(data.body, data.name);
+    const subject = inboxSubject(personalize(data.subject, data.name, data.brand, data.domain));
+    const text = personalize(data.body, data.name, data.brand, data.domain);
 
 
     const response = await fetch(`${GATEWAY_URL}/emails`, {
