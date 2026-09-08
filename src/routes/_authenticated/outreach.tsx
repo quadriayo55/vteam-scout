@@ -16,6 +16,15 @@ import {
   type Channel,
 } from "@/lib/outreach";
 import { parseFile, buildLinks, type ParsedFile } from "@/lib/parse";
+import { extractContacts, gradeList } from "@/lib/extract";
+import { writingAssist, type AssistMode } from "@/lib/ai.functions";
+import {
+  useTemplates,
+  STARTER_TEMPLATES,
+  SUBJECT_CHIPS,
+  TONE_CHIPS,
+  type TemplateRow,
+} from "@/lib/templates";
 import { formatWat } from "@/lib/wat";
 import { StatCard } from "@/components/StatCard";
 import { LiveIndicator } from "@/components/LiveIndicator";
@@ -26,6 +35,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -42,7 +58,13 @@ import {
   RefreshCw,
   Loader2,
   Search,
+  Sparkles,
+  Wand2,
+  ShieldCheck,
+  SpellCheck,
+  Gauge,
 } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
 
 export const Route = createFileRoute("/_authenticated/outreach")({
   head: () => ({
@@ -96,10 +118,16 @@ function OutreachPage() {
   const [processing, setProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
 
+  const [paste, setPaste] = useState("");
+  const [assist, setAssist] = useState<{ title: string; text: string } | null>(null);
+  const [assisting, setAssisting] = useState<AssistMode | null>(null);
+
   const [filter, setFilter] = useState<"all" | Channel>("all");
   const [page, setPage] = useState(0);
   const [search, setSearch] = useState("");
 
+  const runAssist = useServerFn(writingAssist);
+  const templates = useTemplates(user?.id);
   const totals = useQuery(totalsQuery({ userId: user?.id }, "all"));
 
   const links = useQuery({
@@ -125,6 +153,52 @@ function OutreachPage() {
 
   const spam = useMemo(() => spamCheck(`${subject} ${body}`), [subject, body]);
 
+  const pasted = useMemo(() => {
+    const found = extractContacts(paste);
+    const withNames = found.contacts.filter((item) => item.contact_name).length;
+    return {
+      ...found,
+      withNames,
+      grade: gradeList({
+        valid: found.contacts.length,
+        invalid: found.invalid,
+        duplicates: found.duplicates,
+        withNames,
+      }),
+    };
+  }, [paste]);
+
+  const pastedFile: ParsedFile | null = useMemo(() => {
+    if (pasted.contacts.length === 0) return null;
+    return {
+      fileName: "Pasted list",
+      headers: ["name", "email"],
+      rows: pasted.contacts.map((item) => [item.contact_name ?? "", item.email]),
+      columns: { name: 0, email: 1 },
+    };
+  }, [pasted.contacts]);
+
+  const shownTemplates: TemplateRow[] =
+    templates.data && templates.data.length > 0
+      ? templates.data
+      : STARTER_TEMPLATES.map((item, index) => ({ ...item, id: `starter-${index}` }));
+
+  async function callAssist(mode: AssistMode, title: string, text: string) {
+    if (!text.trim()) {
+      toast.error("Write something first.");
+      return;
+    }
+    setAssisting(mode);
+    try {
+      const result = await runAssist({ data: { mode, text } });
+      setAssist({ title, text: result.result });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "That tool could not run.");
+    } finally {
+      setAssisting(null);
+    }
+  }
+
   async function onFilesPicked(list: FileList | null) {
     if (!list?.length) return;
     try {
@@ -138,8 +212,9 @@ function OutreachPage() {
 
   async function generate() {
     if (!user) return;
-    if (!files.length) {
-      toast.error("Add at least one lead file.");
+    const sources = pastedFile ? [...files, pastedFile] : files;
+    if (!sources.length) {
+      toast.error("Add a lead file or paste some contacts.");
       return;
     }
     if (!selected.length) {
@@ -150,7 +225,7 @@ function OutreachPage() {
     setProgress(0);
     try {
       const result = buildLinks(
-        files,
+        sources,
         selected,
         { subject, body, whatsappMessage, useGmail },
         (email, name) =>
@@ -169,8 +244,8 @@ function OutreachPage() {
         .from("uploads")
         .insert({
           user_id: user.id,
-          file_name: files.map((f) => f.fileName).join(", ").slice(0, 300),
-          total_rows: files.reduce((sum, f) => sum + f.rows.length, 0),
+          file_name: sources.map((f) => f.fileName).join(", ").slice(0, 300),
+          total_rows: sources.reduce((sum, f) => sum + f.rows.length, 0),
           valid_rows: result.validRows,
         })
         .select("id")
@@ -206,6 +281,7 @@ function OutreachPage() {
       ].filter(Boolean);
       toast.success(notes.join(" · "));
       setFiles([]);
+      setPaste("");
       setPage(0);
       queryClient.invalidateQueries();
     } catch (error) {
@@ -349,6 +425,42 @@ function OutreachPage() {
               </ul>
             )}
 
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <Label htmlFor="paste">Or paste contacts</Label>
+                <Badge variant="secondary" className="gap-1">
+                  <Sparkles className="size-3" /> Smart extraction
+                </Badge>
+              </div>
+              <Textarea
+                id="paste"
+                rows={4}
+                value={paste}
+                onChange={(event) => setPaste(event.target.value)}
+                placeholder={'Paste anything — one per line, comma soup, or "Jane Doe <jane@shop.com>"'}
+              />
+              <div className="flex flex-wrap items-center gap-2 text-xs">
+                <Badge variant="secondary">{compact(pasted.contacts.length)} valid</Badge>
+                <Badge variant="outline">{compact(pasted.duplicates)} duplicates removed</Badge>
+                <Badge variant="outline">{compact(pasted.invalid)} unusable</Badge>
+                <Badge variant="outline">{compact(pasted.withNames)} with names</Badge>
+                {paste.trim().length > 0 && (
+                  <Button type="button" size="sm" variant="ghost" onClick={() => setPaste("")}>
+                    <Trash2 className="mr-1.5 size-3.5" /> Clear
+                  </Button>
+                )}
+              </div>
+              <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-surface/50 p-3">
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-brand/15 font-display text-base font-bold text-brand">
+                  {pasted.grade.grade}
+                </span>
+                <span className="min-w-0 text-xs">
+                  <span className="block font-semibold">List quality {pasted.grade.score}/100</span>
+                  <span className="block text-muted-foreground">{pasted.grade.note}</span>
+                </span>
+              </div>
+            </div>
+
             <div>
               <Label>Channels to generate</Label>
               <div className="mt-2 flex flex-wrap gap-2">
@@ -386,6 +498,17 @@ function OutreachPage() {
                 value={subject}
                 onChange={(event) => setSubject(event.target.value)}
               />
+              <div className="flex flex-wrap gap-2">
+                {SUBJECT_CHIPS.map((chip) => (
+                  <Chip key={chip.label} label={chip.label} onClick={() => setSubject(chip.value)} />
+                ))}
+                <Chip
+                  label="Analyse subject"
+                  busy={assisting === "subject"}
+                  icon={<Gauge className="size-3" />}
+                  onClick={() => void callAssist("subject", "Subject line review", subject)}
+                />
+              </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="body">Email body</Label>
@@ -407,7 +530,85 @@ function OutreachPage() {
                   </span>
                 )}
               </p>
+              <div className="flex flex-wrap gap-2">
+                {TONE_CHIPS.map((chip) => (
+                  <Chip key={chip.label} label={chip.label} onClick={() => setBody(chip.value)} />
+                ))}
+              </div>
             </div>
+
+            <div className="space-y-2 rounded-xl border border-border bg-surface/40 p-3">
+              <p className="flex items-center gap-2 text-sm font-semibold">
+                <Wand2 className="size-4 text-brand" /> Writing tools
+              </p>
+              <div className="grid gap-2 sm:grid-cols-3">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  disabled={assisting !== null}
+                  onClick={() => void callAssist("grammar", "Grammar check", body)}
+                >
+                  {assisting === "grammar" ? (
+                    <Loader2 className="mr-2 size-3.5 animate-spin" />
+                  ) : (
+                    <SpellCheck className="mr-2 size-3.5" />
+                  )}
+                  Grammar
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  disabled={assisting !== null}
+                  onClick={() =>
+                    void callAssist("spam", "Spam trigger check", `${subject}\n\n${body}`)
+                  }
+                >
+                  {assisting === "spam" ? (
+                    <Loader2 className="mr-2 size-3.5 animate-spin" />
+                  ) : (
+                    <ShieldCheck className="mr-2 size-3.5" />
+                  )}
+                  Spam triggers
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  disabled={assisting !== null}
+                  onClick={() => void callAssist("rephrase", "Rewritten message", body)}
+                >
+                  {assisting === "rephrase" ? (
+                    <Loader2 className="mr-2 size-3.5 animate-spin" />
+                  ) : (
+                    <Sparkles className="mr-2 size-3.5" />
+                  )}
+                  Rephrase
+                </Button>
+              </div>
+            </div>
+
+            <div className="space-y-2 rounded-xl border border-border bg-surface/40 p-3">
+              <p className="text-sm font-semibold">Templates</p>
+              <div className="flex flex-wrap gap-2">
+                {shownTemplates.map((item) => (
+                  <Chip
+                    key={item.id}
+                    label={item.name}
+                    onClick={() => {
+                      setSubject(item.subject);
+                      setBody(item.body);
+                      toast.success(`"${item.name}" loaded.`);
+                    }}
+                  />
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Save your own templates on the Bulk Outreach page — they show up here too.
+              </p>
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="wa">WhatsApp message</Label>
               <Textarea
@@ -560,6 +761,58 @@ function OutreachPage() {
           </div>
         )}
       </section>
+
+      <Dialog open={assist !== null} onOpenChange={(open) => !open && setAssist(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{assist?.title}</DialogTitle>
+            <DialogDescription>
+              Suggestion only — nothing changes until you apply it.
+            </DialogDescription>
+          </DialogHeader>
+          <p className="max-h-72 overflow-y-auto whitespace-pre-wrap rounded-xl border border-border bg-surface/50 p-4 text-sm">
+            {assist?.text}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              onClick={() => {
+                if (assist) setBody(assist.text);
+                setAssist(null);
+              }}
+            >
+              Use as email body
+            </Button>
+            <Button variant="outline" onClick={() => setAssist(null)}>
+              Close
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
+
+function Chip({
+  label,
+  onClick,
+  busy = false,
+  icon,
+}: {
+  label: string;
+  onClick: () => void;
+  busy?: boolean;
+  icon?: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={busy}
+      className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground"
+    >
+      {busy ? <Loader2 className="size-3 animate-spin" /> : icon}
+      {label}
+    </button>
+  );
+}
+
