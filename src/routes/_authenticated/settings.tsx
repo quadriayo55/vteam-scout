@@ -205,11 +205,8 @@ function SettingsPage() {
             <Label>Email</Label>
             <Input value={profile.data?.email ?? user?.email ?? ""} readOnly disabled />
           </div>
-          <div className="space-y-2">
-            <Label>Team</Label>
-            <Input value={teamName} readOnly disabled />
-          </div>
         </div>
+
 
         <Button onClick={saveName} disabled={savingName}>
           {savingName && <Loader2 className="mr-2 size-4 animate-spin" />}
