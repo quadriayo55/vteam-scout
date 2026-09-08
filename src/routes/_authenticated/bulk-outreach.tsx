@@ -41,6 +41,9 @@ type Recipient = { email: string; contact_name: string | null; domain: string | 
 
 const SUBJECT_MAX = 200;
 const BODY_MAX = 2000;
+const RESEND_FROM_NAME = "Verunda Team Scoutier";
+const RESEND_FROM_EMAIL = "outreach@verunda.com";
+const REPLY_TO_EMAIL = "quadri@verunda.com";
 
 function BulkOutreachPage() {
   const { user } = useAuth();
@@ -54,9 +57,6 @@ function BulkOutreachPage() {
   const [raw, setRaw] = useState("");
   const [fileRecipients, setFileRecipients] = useState<Recipient[]>([]);
   const [name, setName] = useState("");
-  const [fromName, setFromName] = useState("Verunda Team Scoutier");
-  const [fromEmail, setFromEmail] = useState("");
-  const [replyTo, setReplyTo] = useState("");
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
   const [batchSize, setBatchSize] = useState(20);
@@ -124,7 +124,7 @@ function BulkOutreachPage() {
       const { data, error } = await supabase
         .from("bulk_send_recipients")
         .select("id,email,contact_name,status,error,sent_at")
-        .eq("send_id", activeId!)
+        .eq("send_id", activeId ?? "")
         .order("created_at", { ascending: true })
         .limit(300);
       if (error) throw error;
@@ -162,7 +162,6 @@ function BulkOutreachPage() {
     mutationFn: async () => {
       if (!user) throw new Error("Please sign in again.");
       if (!stats.recipients.length) throw new Error("Add at least one valid recipient.");
-      if (!isValidEmail(fromEmail)) throw new Error("Add the address your emails send from.");
       if (!subject.trim()) throw new Error("Add a subject line.");
       if (!body.trim()) throw new Error("Add a message body.");
 
@@ -172,9 +171,9 @@ function BulkOutreachPage() {
           user_id: user.id,
           team_id: profile.data?.team_id ?? null,
           name: name.trim() || `Send ${new Date().toISOString().slice(0, 10)}`,
-          from_name: fromName.trim() || "Verunda Team Scoutier",
-          from_email: fromEmail.trim().toLowerCase(),
-          reply_to: replyTo.trim() ? replyTo.trim().toLowerCase() : null,
+          from_name: RESEND_FROM_NAME,
+          from_email: RESEND_FROM_EMAIL,
+          reply_to: REPLY_TO_EMAIL,
           subject: subject.slice(0, SUBJECT_MAX),
           body: body.slice(0, BODY_MAX),
           total: stats.recipients.length,
@@ -222,7 +221,8 @@ function BulkOutreachPage() {
         const result = await runBatch({ data: { sendId } });
         queryClient.invalidateQueries({ queryKey: ["bulk-sends"] });
         queryClient.invalidateQueries({ queryKey: ["bulk-recipients", sendId] });
-        if (result.errors.length) toast.error(result.errors[0]!);
+        const firstError = result.errors[0];
+        if (firstError) toast.error(firstError);
         if (result.capReached) {
           toast.warning("Daily limit reached — sending paused until tomorrow.");
           break;
@@ -316,30 +316,12 @@ function BulkOutreachPage() {
                 placeholder="September Shopify push"
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="from-name">Sender name</Label>
-              <Input
-                id="from-name"
-                value={fromName}
-                onChange={(event) => setFromName(event.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="from-email">Send from</Label>
-              <Input
-                id="from-email"
-                value={fromEmail}
-                onChange={(event) => setFromEmail(event.target.value)}
-                placeholder="hello@yourdomain.com"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="reply-to">Reply-to (optional)</Label>
-              <Input
-                id="reply-to"
-                value={replyTo}
-                onChange={(event) => setReplyTo(event.target.value)}
-              />
+            <div className="rounded-md border border-border bg-muted/40 p-3 text-sm">
+              <p className="font-semibold">Resend delivery</p>
+              <p className="mt-1 text-muted-foreground">
+                From: {RESEND_FROM_NAME} &lt;{RESEND_FROM_EMAIL}&gt;
+              </p>
+              <p className="text-muted-foreground">Replies: {REPLY_TO_EMAIL}</p>
             </div>
           </div>
 
