@@ -542,7 +542,7 @@ function Metric({
 }: {
   label: string;
   value: string;
-  icon?: React.ReactNode;
+  icon?: ReactNode;
 }) {
   return (
     <div className="rounded-xl border border-border bg-surface/50 px-3 py-2.5">
