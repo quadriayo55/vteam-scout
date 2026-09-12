@@ -127,6 +127,13 @@
       "when": 1788904636023,
       "tag": "0017_bulk_recipient_brand",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1789228077658,
+      "tag": "0018_email_analytics_followups_and_team_guard",
+      "breakpoints": true
     }
   ]
 }
