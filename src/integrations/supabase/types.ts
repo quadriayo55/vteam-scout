@@ -16,14 +16,25 @@ export type Database = {
     Tables: {
       bulk_send_recipients: {
         Row: {
+          bounced_at: string | null
           brand: string | null
+          click_count: number
+          complained_at: string | null
           contact_name: string | null
           created_at: string
+          delivered_at: string | null
           domain: string | null
           email: string
           error: string | null
+          first_click_at: string | null
+          first_open_at: string | null
           id: string
+          last_click_at: string | null
+          last_open_at: string | null
+          open_count: number
           provider_id: string | null
+          replied_at: string | null
+          row_data: Json
           send_id: string
           sent_at: string | null
           status: string
@@ -31,14 +42,25 @@ export type Database = {
           variant: number
         }
         Insert: {
+          bounced_at?: string | null
           brand?: string | null
+          click_count?: number
+          complained_at?: string | null
           contact_name?: string | null
           created_at?: string
+          delivered_at?: string | null
           domain?: string | null
           email: string
           error?: string | null
+          first_click_at?: string | null
+          first_open_at?: string | null
           id?: string
+          last_click_at?: string | null
+          last_open_at?: string | null
+          open_count?: number
           provider_id?: string | null
+          replied_at?: string | null
+          row_data?: Json
           send_id: string
           sent_at?: string | null
           status?: string
@@ -46,14 +68,25 @@ export type Database = {
           variant?: number
         }
         Update: {
+          bounced_at?: string | null
           brand?: string | null
+          click_count?: number
+          complained_at?: string | null
           contact_name?: string | null
           created_at?: string
+          delivered_at?: string | null
           domain?: string | null
           email?: string
           error?: string | null
+          first_click_at?: string | null
+          first_open_at?: string | null
           id?: string
+          last_click_at?: string | null
+          last_open_at?: string | null
+          open_count?: number
           provider_id?: string | null
+          replied_at?: string | null
+          row_data?: Json
           send_id?: string
           sent_at?: string | null
           status?: string
@@ -81,11 +114,13 @@ export type Database = {
           from_name: string
           gap_seconds: number
           id: string
+          merge_keys: Json
           name: string
           reply_to: string | null
           rotation: string
           rotation_size: number
           sent: number
+          source_files: Json
           status: string
           subject: string
           team_id: string | null
@@ -104,11 +139,13 @@ export type Database = {
           from_name: string
           gap_seconds?: number
           id?: string
+          merge_keys?: Json
           name: string
           reply_to?: string | null
           rotation?: string
           rotation_size?: number
           sent?: number
+          source_files?: Json
           status?: string
           subject: string
           team_id?: string | null
@@ -127,11 +164,13 @@ export type Database = {
           from_name?: string
           gap_seconds?: number
           id?: string
+          merge_keys?: Json
           name?: string
           reply_to?: string | null
           rotation?: string
           rotation_size?: number
           sent?: number
+          source_files?: Json
           status?: string
           subject?: string
           team_id?: string | null
@@ -334,6 +373,63 @@ export type Database = {
         }
         Relationships: []
       }
+      email_events: {
+        Row: {
+          created_at: string
+          email: string | null
+          event_key: string
+          event_type: string
+          id: string
+          occurred_at: string
+          payload: Json
+          provider_id: string | null
+          recipient_id: string | null
+          send_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          event_key: string
+          event_type: string
+          id?: string
+          occurred_at?: string
+          payload?: Json
+          provider_id?: string | null
+          recipient_id?: string | null
+          send_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          event_key?: string
+          event_type?: string
+          id?: string
+          occurred_at?: string
+          payload?: Json
+          provider_id?: string | null
+          recipient_id?: string | null
+          send_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_events_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "bulk_send_recipients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_events_send_id_fkey"
+            columns: ["send_id"]
+            isOneToOne: false
+            referencedRelation: "bulk_sends"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_settings: {
         Row: {
           created_at: string
@@ -393,6 +489,209 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      followup_deliveries: {
+        Row: {
+          created_at: string
+          email: string
+          error: string | null
+          id: string
+          provider_id: string | null
+          recipient_id: string
+          sent_at: string | null
+          sequence_id: string
+          status: string
+          step_id: string
+          user_id: string
+          variant: number
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          error?: string | null
+          id?: string
+          provider_id?: string | null
+          recipient_id: string
+          sent_at?: string | null
+          sequence_id: string
+          status?: string
+          step_id: string
+          user_id: string
+          variant?: number
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          error?: string | null
+          id?: string
+          provider_id?: string | null
+          recipient_id?: string
+          sent_at?: string | null
+          sequence_id?: string
+          status?: string
+          step_id?: string
+          user_id?: string
+          variant?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "followup_deliveries_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "bulk_send_recipients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "followup_deliveries_sequence_id_fkey"
+            columns: ["sequence_id"]
+            isOneToOne: false
+            referencedRelation: "followup_sequences"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "followup_deliveries_step_id_fkey"
+            columns: ["step_id"]
+            isOneToOne: false
+            referencedRelation: "followup_steps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      followup_sequences: {
+        Row: {
+          audience_mode: string
+          batch_size: number
+          created_at: string
+          exclude_clicked: boolean
+          exclude_opened: boolean
+          exclude_replied: boolean
+          gap_seconds: number
+          id: string
+          name: string
+          send_hour: number
+          send_id: string
+          send_minute: number
+          status: string
+          timezone: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          audience_mode?: string
+          batch_size?: number
+          created_at?: string
+          exclude_clicked?: boolean
+          exclude_opened?: boolean
+          exclude_replied?: boolean
+          gap_seconds?: number
+          id?: string
+          name: string
+          send_hour?: number
+          send_id: string
+          send_minute?: number
+          status?: string
+          timezone?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          audience_mode?: string
+          batch_size?: number
+          created_at?: string
+          exclude_clicked?: boolean
+          exclude_opened?: boolean
+          exclude_replied?: boolean
+          gap_seconds?: number
+          id?: string
+          name?: string
+          send_hour?: number
+          send_id?: string
+          send_minute?: number
+          status?: string
+          timezone?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "followup_sequences_send_id_fkey"
+            columns: ["send_id"]
+            isOneToOne: false
+            referencedRelation: "bulk_sends"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      followup_steps: {
+        Row: {
+          anchor: string
+          completed_at: string | null
+          created_at: string
+          delay_days: number
+          error: string | null
+          failed: number
+          id: string
+          position: number
+          rotation: string
+          rotation_size: number
+          scheduled_at: string | null
+          sent: number
+          sequence_id: string
+          skipped: number
+          started_at: string | null
+          status: string
+          user_id: string
+          variants: Json
+        }
+        Insert: {
+          anchor?: string
+          completed_at?: string | null
+          created_at?: string
+          delay_days?: number
+          error?: string | null
+          failed?: number
+          id?: string
+          position?: number
+          rotation?: string
+          rotation_size?: number
+          scheduled_at?: string | null
+          sent?: number
+          sequence_id: string
+          skipped?: number
+          started_at?: string | null
+          status?: string
+          user_id: string
+          variants?: Json
+        }
+        Update: {
+          anchor?: string
+          completed_at?: string | null
+          created_at?: string
+          delay_days?: number
+          error?: string | null
+          failed?: number
+          id?: string
+          position?: number
+          rotation?: string
+          rotation_size?: number
+          scheduled_at?: string | null
+          sent?: number
+          sequence_id?: string
+          skipped?: number
+          started_at?: string | null
+          status?: string
+          user_id?: string
+          variants?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "followup_steps_sequence_id_fkey"
+            columns: ["sequence_id"]
+            isOneToOne: false
+            referencedRelation: "followup_sequences"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       outreach_links: {
         Row: {
