@@ -27,6 +27,7 @@ import { Route as AuthenticatedScoutingRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedTeamRouteImport } from './routes/_authenticated/team'
 import { Route as JCodeRouteImport } from './routes/j.$code'
+import { Route as ApiPublicInngestRouteImport } from './routes/api/public/inngest'
 import { Route as ApiPublicResendEventsRouteImport } from './routes/api/public/resend-events'
 
 const IndexRoute = IndexRouteImport.update({
@@ -121,6 +122,11 @@ const JCodeRoute = JCodeRouteImport.update({
   path: '/j/$code',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicInngestRoute = ApiPublicInngestRouteImport.update({
+  id: '/api/public/inngest',
+  path: '/api/public/inngest',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicResendEventsRoute = ApiPublicResendEventsRouteImport.update({
   id: '/api/public/resend-events',
   path: '/api/public/resend-events',
@@ -145,6 +151,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AuthenticatedSettingsRoute
   '/team': typeof AuthenticatedTeamRoute
   '/j/$code': typeof JCodeRoute
+  '/api/public/inngest': typeof ApiPublicInngestRoute
   '/api/public/resend-events': typeof ApiPublicResendEventsRoute
 }
 export interface FileRoutesByTo {
@@ -165,6 +172,7 @@ export interface FileRoutesByTo {
   '/settings': typeof AuthenticatedSettingsRoute
   '/team': typeof AuthenticatedTeamRoute
   '/j/$code': typeof JCodeRoute
+  '/api/public/inngest': typeof ApiPublicInngestRoute
   '/api/public/resend-events': typeof ApiPublicResendEventsRoute
 }
 export interface FileRoutesById {
@@ -187,6 +195,7 @@ export interface FileRoutesById {
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/team': typeof AuthenticatedTeamRoute
   '/j/$code': typeof JCodeRoute
+  '/api/public/inngest': typeof ApiPublicInngestRoute
   '/api/public/resend-events': typeof ApiPublicResendEventsRoute
 }
 export interface FileRouteTypes {
@@ -209,6 +218,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/team'
     | '/j/$code'
+    | '/api/public/inngest'
     | '/api/public/resend-events'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -229,6 +239,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/team'
     | '/j/$code'
+    | '/api/public/inngest'
     | '/api/public/resend-events'
   id:
     | '__root__'
@@ -250,6 +261,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings'
     | '/_authenticated/team'
     | '/j/$code'
+    | '/api/public/inngest'
     | '/api/public/resend-events'
   fileRoutesById: FileRoutesById
 }
@@ -260,6 +272,7 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   JCodeRoute: typeof JCodeRoute
+  ApiPublicInngestRoute: typeof ApiPublicInngestRoute
   ApiPublicResendEventsRoute: typeof ApiPublicResendEventsRoute
 }
 
@@ -391,6 +404,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof JCodeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/inngest': {
+      id: '/api/public/inngest'
+      path: '/api/public/inngest'
+      fullPath: '/api/public/inngest'
+      preLoaderRoute: typeof ApiPublicInngestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/resend-events': {
       id: '/api/public/resend-events'
       path: '/api/public/resend-events'
@@ -441,6 +461,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   JCodeRoute: JCodeRoute,
+  ApiPublicInngestRoute: ApiPublicInngestRoute,
   ApiPublicResendEventsRoute: ApiPublicResendEventsRoute,
 }
 export const routeTree = rootRouteImport
