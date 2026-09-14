@@ -254,6 +254,10 @@ function BulkOutreachPage() {
     },
   });
 
+  // The server owns the truth about a send, so the page just reads its status.
+  const active = (sends.data ?? []).find((row) => row.id === activeId);
+  const running = active?.status === "sending";
+
   const recipients = useQuery({
     queryKey: ["bulk-recipients", activeId],
     enabled: Boolean(activeId),
