@@ -122,7 +122,7 @@ export const Route = createFileRoute("/api/public/resend-events")({
           send_id: recipient?.send_id ?? null,
           user_id: recipient?.user_id ?? null,
           email: address,
-          payload: event as unknown as Record<string, unknown>,
+          payload: JSON.parse(JSON.stringify(event)),
           occurred_at: occurredAt,
         });
         if (logError) {
@@ -134,7 +134,8 @@ export const Route = createFileRoute("/api/public/resend-events")({
         }
         if (!recipient) return new Response("ok");
 
-        const patch: Record<string, unknown> = {};
+        type RecipientPatch = Record<string, string | number | null>;
+        const patch: RecipientPatch = {};
         if (type.endsWith("delivered")) patch["delivered_at"] = occurredAt;
         else if (type.endsWith("bounced")) patch["bounced_at"] = occurredAt;
         else if (type.endsWith("complained")) patch["complained_at"] = occurredAt;
@@ -151,7 +152,10 @@ export const Route = createFileRoute("/api/public/resend-events")({
         }
 
         if (Object.keys(patch).length > 0) {
-          await supabaseAdmin.from("bulk_send_recipients").update(patch).eq("id", recipient.id);
+          await supabaseAdmin
+            .from("bulk_send_recipients")
+            .update(patch as never)
+            .eq("id", recipient.id);
         }
 
         // A reply is worth seeing straight away, so forward a readable copy.

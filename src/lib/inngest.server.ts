@@ -10,8 +10,10 @@ import { runDueFollowups } from "./followups.server";
 export const inngest = new Inngest({ id: "verunda-team-scoutier" });
 
 const followupTick = inngest.createFunction(
-  { id: "followup-tick" },
-  [{ cron: "*/5 * * * *" }, { event: "followups/run" }],
+  {
+    id: "followup-tick",
+    triggers: [{ cron: "*/5 * * * *" }, { event: "followups/run" }],
+  },
   async () => await runDueFollowups(),
 );
 
