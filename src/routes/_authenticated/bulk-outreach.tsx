@@ -1020,7 +1020,7 @@ function BulkOutreachPage() {
             </div>
             <Button
               onClick={() => create.mutate()}
-              disabled={create.isPending || !stats.recipients.length}
+              disabled={create.isPending || !stats.recipients.length || unknownTags.length > 0}
               className="w-full sm:w-auto"
             >
               {create.isPending ? (
