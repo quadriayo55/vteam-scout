@@ -527,37 +527,39 @@ function BulkOutreachPage() {
       toast.error(error instanceof Error ? error.message : "Templates could not be reset."),
   });
 
-  async function start(sendId: string, gap: number) {
-    setActiveId(sendId);
-    setRunning(true);
-    stopRef.current = false;
-    try {
-      for (;;) {
-        if (stopRef.current) break;
-        const result = await runBatch({ data: { sendId } });
-        queryClient.invalidateQueries({ queryKey: ["bulk-sends"] });
-        queryClient.invalidateQueries({ queryKey: ["bulk-recipients", sendId] });
-        queryClient.invalidateQueries({ queryKey: ["sent-today"] });
-        const firstError = result.errors[0];
-        if (firstError) toast.error(firstError);
-        if (result.capReached) {
-          toast.warning("Daily limit reached — sending paused until tomorrow.");
-          break;
-        }
-        if (result.remaining === 0) {
-          toast.success("All emails sent.");
-          break;
-        }
-        if (gap > 0) await new Promise((resolve) => setTimeout(resolve, gap * 1000));
-      }
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Sending stopped unexpectedly.");
-    } finally {
-      setRunning(false);
-    }
+  function refreshSendViews(sendId: string) {
+    queryClient.invalidateQueries({ queryKey: ["bulk-sends"] });
+    queryClient.invalidateQueries({ queryKey: ["bulk-recipients", sendId] });
+    queryClient.invalidateQueries({ queryKey: ["sent-today"] });
   }
 
-  const active = (sends.data ?? []).find((row) => row.id === activeId);
+  const startSending = useMutation({
+    mutationFn: async (sendId: string) => {
+      await beginSend({ data: { sendId } });
+      return sendId;
+    },
+    onSuccess: (sendId) => {
+      setActiveId(sendId);
+      refreshSendViews(sendId);
+      toast.success("Sending started. You can close the app — it keeps going on its own.");
+    },
+    onError: (error) =>
+      toast.error(error instanceof Error ? error.message : "Sending could not be started."),
+  });
+
+  const stopSending = useMutation({
+    mutationFn: async (sendId: string) => {
+      await haltSend({ data: { sendId } });
+      return sendId;
+    },
+    onSuccess: (sendId) => {
+      refreshSendViews(sendId);
+      toast.success("Sending stopped. Press Start sending to pick up where it left off.");
+    },
+    onError: (error) =>
+      toast.error(error instanceof Error ? error.message : "Sending could not be stopped."),
+  });
+
   const shownTemplates: TemplateRow[] =
     templates.data && templates.data.length > 0
       ? templates.data
