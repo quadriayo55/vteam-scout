@@ -10,6 +10,7 @@ import { writingAssist, type AssistMode } from "@/lib/ai.functions";
 import { isValidEmail, spamCheck, compact, personalize } from "@/lib/outreach";
 import { extractContacts, gradeList } from "@/lib/extract";
 import { parseFile } from "@/lib/parse";
+import { buildRowData, missingTags, normalizeKey, type RowData } from "@/lib/merge";
 import {
   useTemplates,
   STARTER_TEMPLATES,
