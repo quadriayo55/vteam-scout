@@ -354,6 +354,14 @@ function BulkOutreachPage() {
       if (filled.length !== used.length) {
         throw new Error("Every message needs a subject and a body before sending.");
       }
+      if (unknownTags.length) {
+        throw new Error(
+          `Your list has no column for ${unknownTags.map((tag) => `{${tag}}`).join(", ")}. Fix or remove ${
+            unknownTags.length > 1 ? "those tags" : "that tag"
+          } before sending.`,
+        );
+      }
+
 
       const total = stats.recipients.length;
       const { data: send, error } = await supabase
