@@ -7,10 +7,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { sendBulkBatch, sendDraftTest } from "@/lib/bulk.functions";
 import { writingAssist, type AssistMode } from "@/lib/ai.functions";
-import { isValidEmail, spamCheck, compact, personalize } from "@/lib/outreach";
+import { isValidEmail, spamCheck, compact } from "@/lib/outreach";
 import { extractContacts, gradeList } from "@/lib/extract";
 import { parseFile } from "@/lib/parse";
-import { buildRowData, missingTags, normalizeKey, type RowData } from "@/lib/merge";
+import { buildRowData, missingTags, normalizeKey, renderTemplate, type RowData } from "@/lib/merge";
 import {
   useTemplates,
   STARTER_TEMPLATES,
@@ -441,6 +441,7 @@ function BulkOutreachPage() {
           name: stats.recipients[0]?.contact_name ?? "there",
           brand: stats.recipients[0]?.brand ?? undefined,
           domain: stats.recipients[0]?.domain ?? undefined,
+          row: stats.recipients[0]?.row ?? {},
         },
       });
     },
@@ -557,7 +558,15 @@ function BulkOutreachPage() {
     templates.data && templates.data.length > 0
       ? templates.data
       : STARTER_TEMPLATES.map((item, index) => ({ ...item, id: `starter-${index}` }));
-  const previewName = stats.recipients[0]?.contact_name ?? "there";
+  const previewRecipient = stats.recipients[0];
+  const previewName = previewRecipient?.contact_name ?? "there";
+  const previewContext = {
+    row: previewRecipient?.row ?? {},
+    name: previewRecipient?.contact_name ?? null,
+    brand: previewRecipient?.brand ?? null,
+    domain: previewRecipient?.domain ?? null,
+    email: previewRecipient?.email ?? null,
+  };
   const totalGenerated = (sends.data ?? []).reduce((sum, row) => sum + row.total, 0);
   const totalSent = (sends.data ?? []).reduce((sum, row) => sum + row.sent, 0);
 
@@ -1295,9 +1304,9 @@ function BulkOutreachPage() {
             <p className="text-xs text-muted-foreground">
               From: {sender.from_name} &lt;{senderAddress(sender)}&gt;
             </p>
-            <p className="font-semibold">{personalize(current.subject, previewName) || "(no subject)"}</p>
+            <p className="font-semibold">{renderTemplate(current.subject, previewContext) || "(no subject)"}</p>
             <p className="whitespace-pre-wrap text-muted-foreground">
-              {personalize(current.body, previewName) || "(no message yet)"}
+              {renderTemplate(current.body, previewContext) || "(no message yet)"}
             </p>
           </div>
         </DialogContent>
