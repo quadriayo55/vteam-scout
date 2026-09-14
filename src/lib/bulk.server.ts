@@ -165,7 +165,8 @@ export async function runBulkBatch(sendId: string): Promise<BatchOutcome> {
     .maybeSingle();
   const wasStopped = fresh?.status !== "sending";
 
-  const status = remaining === 0 ? "completed" : wasStopped ? (fresh?.status ?? "paused") : "sending";
+  const status =
+    remaining === 0 ? "completed" : wasStopped ? (fresh?.status ?? "paused") : "sending";
   await supabaseAdmin
     .from("bulk_sends")
     .update({

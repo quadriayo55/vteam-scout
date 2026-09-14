@@ -139,7 +139,7 @@ function BulkOutreachPage() {
   const [gapSeconds, setGapSeconds] = useState(60);
   const [dailyCap, setDailyCap] = useState(5000);
   const [activeId, setActiveId] = useState<string | null>(null);
-  
+
   const [parsing, setParsing] = useState(false);
   const [assist, setAssist] = useState<{ title: string; text: string } | null>(null);
   const [assisting, setAssisting] = useState<AssistMode | null>(null);
@@ -366,7 +366,6 @@ function BulkOutreachPage() {
         );
       }
 
-
       const total = stats.recipients.length;
       const { data: send, error } = await supabase
         .from("bulk_sends")
@@ -415,9 +414,7 @@ function BulkOutreachPage() {
             variant: picked,
           };
         });
-        const { error: chunkError } = await supabase
-          .from("bulk_send_recipients")
-          .insert(chunk);
+        const { error: chunkError } = await supabase.from("bulk_send_recipients").insert(chunk);
         if (chunkError) throw chunkError;
       }
       return send.id as string;
@@ -473,7 +470,6 @@ function BulkOutreachPage() {
     onError: (error) =>
       toast.error(error instanceof Error ? error.message : "That send could not be deleted."),
   });
-
 
   const saveTemplate = useMutation({
     mutationFn: async () => {
@@ -602,7 +598,9 @@ function BulkOutreachPage() {
               rows={5}
               value={raw}
               onChange={(event) => setRaw(event.target.value)}
-              placeholder={'Paste anything — one per line, comma soup, or "Jane Doe <jane@shop.com>"'}
+              placeholder={
+                'Paste anything — one per line, comma soup, or "Jane Doe <jane@shop.com>"'
+              }
             />
             <div className="flex flex-wrap items-center gap-2 text-xs">
               <Badge variant="secondary">{compact(stats.recipients.length)} valid</Badge>
@@ -808,9 +806,7 @@ function BulkOutreachPage() {
                   label="Analyse subject"
                   busy={assisting === "subject"}
                   icon={<Gauge className="size-3" />}
-                  onClick={() =>
-                    void callAssist("subject", "Subject line review", current.subject)
-                  }
+                  onClick={() => void callAssist("subject", "Subject line review", current.subject)}
                 />
               </div>
               <SpamHint level={subjectSpam.level} hits={subjectSpam.hits} />
@@ -996,9 +992,9 @@ function BulkOutreachPage() {
                   onChange={(event) => setBatchSize(Number(event.target.value) || 1)}
                 />
                 <p className="text-xs text-muted-foreground">
-                  How many emails go out in one go before the app pauses. With {batchSize} per batch,
-                  a list of 1,000 people is sent in small groups of {batchSize} rather than all at
-                  once — this looks natural and protects your sending reputation.
+                  How many emails go out in one go before the app pauses. With {batchSize} per
+                  batch, a list of 1,000 people is sent in small groups of {batchSize} rather than
+                  all at once — this looks natural and protects your sending reputation.
                 </p>
               </div>
               <div className="space-y-2">
@@ -1013,7 +1009,8 @@ function BulkOutreachPage() {
                 />
                 <p className="text-xs text-muted-foreground">
                   Waiting time before the next {batchSize} go out — roughly{" "}
-                  {compact(Math.round((batchSize * 3600) / Math.max(gapSeconds, 1)))} emails an hour.
+                  {compact(Math.round((batchSize * 3600) / Math.max(gapSeconds, 1)))} emails an
+                  hour.
                 </p>
               </div>
               <div className="space-y-2">
@@ -1024,9 +1021,7 @@ function BulkOutreachPage() {
                   min={1}
                   max={5000}
                   value={dailyCap}
-                  onChange={(event) =>
-                    setDailyCap(Math.min(Number(event.target.value) || 1, 5000))
-                  }
+                  onChange={(event) => setDailyCap(Math.min(Number(event.target.value) || 1, 5000))}
                 />
                 <p className="text-xs text-muted-foreground">
                   Most you'll send in one day — up to 5,000. Anything left over waits for tomorrow.
@@ -1317,7 +1312,9 @@ function BulkOutreachPage() {
             <p className="text-xs text-muted-foreground">
               From: {sender.from_name} &lt;{senderAddress(sender)}&gt;
             </p>
-            <p className="font-semibold">{renderTemplate(current.subject, previewContext) || "(no subject)"}</p>
+            <p className="font-semibold">
+              {renderTemplate(current.subject, previewContext) || "(no subject)"}
+            </p>
             <p className="whitespace-pre-wrap text-muted-foreground">
               {renderTemplate(current.body, previewContext) || "(no message yet)"}
             </p>
@@ -1329,7 +1326,9 @@ function BulkOutreachPage() {
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>{assist?.title}</DialogTitle>
-            <DialogDescription>Suggestion only — nothing changes until you apply it.</DialogDescription>
+            <DialogDescription>
+              Suggestion only — nothing changes until you apply it.
+            </DialogDescription>
           </DialogHeader>
           <p className="max-h-72 overflow-y-auto whitespace-pre-wrap rounded-xl border border-border bg-surface/50 p-4 text-sm">
             {assist?.text}
@@ -1390,7 +1389,13 @@ function ProgressRing({ percent }: { percent: number }) {
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (Math.min(Math.max(percent, 0), 100) / 100) * circumference;
   return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} role="img" aria-label={`${percent}% sent`}>
+    <svg
+      width={size}
+      height={size}
+      viewBox={`0 0 ${size} ${size}`}
+      role="img"
+      aria-label={`${percent}% sent`}
+    >
       <circle
         cx={size / 2}
         cy={size / 2}

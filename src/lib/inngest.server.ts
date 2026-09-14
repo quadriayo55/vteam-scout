@@ -87,10 +87,7 @@ export const inngestHandler = serve({
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/inngest";
 
 /** Hands a job to the background scheduler. */
-export async function sendInngestEvent(
-  name: string,
-  data: Record<string, unknown>,
-): Promise<void> {
+export async function sendInngestEvent(name: string, data: Record<string, unknown>): Promise<void> {
   const lovableKey = process.env["LOVABLE_API_KEY"];
   const inngestKey = process.env["INNGEST_API_KEY"];
   if (!lovableKey || !inngestKey) {
@@ -110,6 +107,8 @@ export async function sendInngestEvent(
   if (!response.ok) {
     const body = await response.text();
     console.error(`[inngest] event failed [${response.status}]: ${body}`);
-    throw new Error(`Background sending could not be started [${response.status}]: ${body.slice(0, 300)}`);
+    throw new Error(
+      `Background sending could not be started [${response.status}]: ${body.slice(0, 300)}`,
+    );
   }
 }
