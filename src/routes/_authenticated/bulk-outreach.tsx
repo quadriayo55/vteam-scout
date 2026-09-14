@@ -139,7 +139,7 @@ function BulkOutreachPage() {
   const [gapSeconds, setGapSeconds] = useState(60);
   const [dailyCap, setDailyCap] = useState(5000);
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [running, setRunning] = useState(false);
+  
   const [parsing, setParsing] = useState(false);
   const [assist, setAssist] = useState<{ title: string; text: string } | null>(null);
   const [assisting, setAssisting] = useState<AssistMode | null>(null);
