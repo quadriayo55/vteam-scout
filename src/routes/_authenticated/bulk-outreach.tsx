@@ -10,6 +10,7 @@ import { writingAssist, type AssistMode } from "@/lib/ai.functions";
 import { isValidEmail, spamCheck, compact, personalize } from "@/lib/outreach";
 import { extractContacts, gradeList } from "@/lib/extract";
 import { parseFile } from "@/lib/parse";
+import { buildRowData, missingTags, normalizeKey, type RowData } from "@/lib/merge";
 import {
   useTemplates,
   STARTER_TEMPLATES,
@@ -88,6 +89,7 @@ type Recipient = {
   contact_name: string | null;
   domain: string | null;
   brand: string | null;
+  row: RowData;
 };
 
 const BRAND_HINTS = [
@@ -107,7 +109,7 @@ type Message = { subject: string; body: string };
 
 const SUBJECT_MAX = 200;
 const BODY_MAX = 2000;
-const MAX_MESSAGES = 5;
+const MAX_MESSAGES = 10;
 
 const emptyMessage = (): Message => ({ subject: "", body: "" });
 
@@ -124,6 +126,8 @@ function BulkOutreachPage() {
 
   const [raw, setRaw] = useState("");
   const [fileRecipients, setFileRecipients] = useState<Recipient[]>([]);
+  const [sourceFiles, setSourceFiles] = useState<string[]>([]);
+  const [fileColumns, setFileColumns] = useState<string[]>([]);
   const [name, setName] = useState("");
   const [messages, setMessages] = useState<Message[]>([emptyMessage()]);
   const [activeMessage, setActiveMessage] = useState(0);
@@ -172,7 +176,13 @@ function BulkOutreachPage() {
     };
 
     pasted.contacts.forEach((item) =>
-      push({ email: item.email, contact_name: item.contact_name, domain: null, brand: null }),
+      push({
+        email: item.email,
+        contact_name: item.contact_name,
+        domain: null,
+        brand: null,
+        row: {},
+      }),
     );
     fileRecipients.forEach(push);
 
@@ -187,6 +197,30 @@ function BulkOutreachPage() {
       grade: gradeList({ valid: recipients.length, invalid, duplicates, withNames }),
     };
   }, [raw, fileRecipients]);
+
+  /** Every tag the uploaded columns can fill, plus the built-in ones. */
+  const mergeKeys = useMemo(() => {
+    const keys = new Set<string>(fileColumns.map(normalizeKey).filter(Boolean));
+    for (const item of stats.recipients.slice(0, 200)) {
+      Object.keys(item.row ?? {}).forEach((key) => keys.add(key));
+      if (item.contact_name) keys.add("name");
+      if (item.brand) ["brand", "store", "company"].forEach((key) => keys.add(key));
+      if (item.domain) ["domain", "website"].forEach((key) => keys.add(key));
+    }
+    keys.add("email");
+    return [...keys].filter(Boolean).sort();
+  }, [fileColumns, stats.recipients]);
+
+  const usedMessages = rotationOn ? messages : [current];
+  const unknownTags = useMemo(
+    () =>
+      missingTags(
+        usedMessages.flatMap((item) => [item.subject, item.body]),
+        mergeKeys,
+      ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [JSON.stringify(usedMessages), mergeKeys],
+  );
 
   const subjectSpam = spamCheck(current.subject);
   const bodySpam = spamCheck(current.body);
@@ -275,17 +309,13 @@ function BulkOutreachPage() {
         contact_name: nameIndex !== undefined ? (row[nameIndex] ?? "").trim() || null : null,
         domain: domainIndex !== undefined ? (row[domainIndex] ?? "").trim() || null : null,
         brand: brandIndex >= 0 ? (row[brandIndex] ?? "").trim() || null : null,
+        row: buildRowData(parsed.headers, row),
       }));
       setFileRecipients((currentRows) => [...currentRows, ...rows]);
-      const found = [
-        nameIndex !== undefined ? "names" : null,
-        brandIndex >= 0 ? "brand / store names" : null,
-        domainIndex !== undefined ? "store links" : null,
-      ].filter(Boolean);
+      setSourceFiles((list) => (list.includes(file.name) ? list : [...list, file.name]));
+      setFileColumns((list) => [...new Set([...list, ...parsed.headers.filter(Boolean)])]);
       toast.success(
-        `${rows.length.toLocaleString()} rows read from ${file.name}${
-          found.length ? ` — ${found.join(", ")} picked up` : ""
-        }`,
+        `${rows.length.toLocaleString()} rows read from ${file.name} — every column is usable as a {tag}`,
       );
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "That file could not be read.");
@@ -324,6 +354,14 @@ function BulkOutreachPage() {
       if (filled.length !== used.length) {
         throw new Error("Every message needs a subject and a body before sending.");
       }
+      if (unknownTags.length) {
+        throw new Error(
+          `Your list has no column for ${unknownTags.map((tag) => `{${tag}}`).join(", ")}. Fix or remove ${
+            unknownTags.length > 1 ? "those tags" : "that tag"
+          } before sending.`,
+        );
+      }
+
 
       const total = stats.recipients.length;
       const { data: send, error } = await supabase
@@ -346,6 +384,8 @@ function BulkOutreachPage() {
           batch_size: Math.max(1, Math.min(batchSize, 100)),
           gap_seconds: Math.max(0, Math.min(gapSeconds, 3600)),
           daily_cap: Math.max(1, Math.min(dailyCap, 5000)),
+          source_files: sourceFiles,
+          merge_keys: mergeKeys,
           status: "ready",
         })
         .select("id")
@@ -367,6 +407,7 @@ function BulkOutreachPage() {
             contact_name: item.contact_name,
             domain: item.domain,
             brand: item.brand,
+            row_data: item.row ?? {},
             variant: picked,
           };
         });
@@ -786,10 +827,33 @@ function BulkOutreachPage() {
               </div>
               <SpamHint level={bodySpam.level} hits={bodySpam.hits} />
               <p className="text-xs text-brand">
-                Personalisation on — <code>{"{name}"}</code> becomes the contact's name,{" "}
-                <code>{"{brand}"}</code> the brand or store name, and <code>{"{website}"}</code> the
-                store link from your file.
+                Personalisation on — every column in your file works as a tag. Click one to insert
+                it.
               </p>
+              {mergeKeys.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {mergeKeys.map((key) => (
+                    <button
+                      key={key}
+                      type="button"
+                      className="rounded-md border border-border bg-surface/60 px-2 py-1 text-[11px] font-medium transition-colors hover:bg-accent"
+                      onClick={() => updateMessage({ body: `${current.body}{${key}}` })}
+                    >
+                      {`{${key}}`}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {unknownTags.length > 0 && (
+                <p className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-2 text-xs font-medium text-destructive">
+                  <AlertTriangle className="mt-0.5 size-3.5 shrink-0" />
+                  <span>
+                    Your list has no column for {unknownTags.map((tag) => `{${tag}}`).join(", ")}.
+                    Sending is blocked until you fix or remove{" "}
+                    {unknownTags.length > 1 ? "those tags" : "that tag"}.
+                  </span>
+                </p>
+              )}
             </div>
 
             {/* Writing tools */}
@@ -956,7 +1020,7 @@ function BulkOutreachPage() {
             </div>
             <Button
               onClick={() => create.mutate()}
-              disabled={create.isPending || !stats.recipients.length}
+              disabled={create.isPending || !stats.recipients.length || unknownTags.length > 0}
               className="w-full sm:w-auto"
             >
               {create.isPending ? (
