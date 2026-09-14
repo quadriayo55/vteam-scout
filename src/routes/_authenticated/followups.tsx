@@ -189,7 +189,7 @@ function FollowupsPage() {
       let previous = new Date();
       const rows = steps.map((step, index) => {
         const from = step.anchor === "original" ? new Date() : previous;
-        const at = localSendTime(from, step.delayDays, hour, minute, tz);
+        const at = localSendTime(from, step.delayDays, tz, hour, minute);
         previous = at;
         return {
           sequence_id: sequence.id,
@@ -290,9 +290,17 @@ function FollowupsPage() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <StatCard label="Running" value={active} icon={Repeat} />
-        <StatCard label="All follow ups" value={sequences.data?.length ?? 0} icon={CalendarClock} />
-        <StatCard label="Lists you have emailed" value={sends.data?.length ?? 0} icon={Users} />
+        <StatCard label="Running" value={active} icon={<Repeat className="size-4" />} tone="brand" />
+        <StatCard
+          label="All follow ups"
+          value={sequences.data?.length ?? 0}
+          icon={<CalendarClock className="size-4" />}
+        />
+        <StatCard
+          label="Lists you have emailed"
+          value={sends.data?.length ?? 0}
+          icon={<Users className="size-4" />}
+        />
       </div>
 
       <section className="space-y-4 rounded-2xl border border-border bg-surface/40 p-4 sm:p-5">
@@ -595,7 +603,7 @@ function FollowupsPage() {
                     >
                       <span className="font-medium">Step {step.position}</span>
                       <span className="text-xs text-muted-foreground">
-                        {step.scheduled_at ? formatIn(step.scheduled_at, tz) : "not scheduled"}
+                        {step.scheduled_at ? formatIn(tz, step.scheduled_at) : "not scheduled"}
                       </span>
                       <span className="text-xs">
                         {step.sent} sent · {step.skipped} skipped · {step.failed} failed
