@@ -1192,26 +1192,33 @@ function BulkOutreachPage() {
                 />
                 <StatCard label="Failed" value={active.failed} tone="muted" />
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 {running ? (
                   <Button
                     variant="outline"
-                    onClick={() => {
-                      stopRef.current = true;
-                      setRunning(false);
-                    }}
+                    disabled={stopSending.isPending}
+                    onClick={() => stopSending.mutate(active.id)}
                   >
-                    <Pause className="mr-2 size-4" /> Pause
+                    <Pause className="mr-2 size-4" /> Stop sending
                   </Button>
+                ) : active.status === "completed" ? (
+                  <span className="text-sm text-emerald-400">All emails sent.</span>
                 ) : (
-                  <Button onClick={() => void start(active.id, active.gap_seconds)}>
-                    <Play className="mr-2 size-4" /> Start sending
+                  <Button
+                    disabled={startSending.isPending}
+                    onClick={() => startSending.mutate(active.id)}
+                  >
+                    <Play className="mr-2 size-4" />
+                    {active.sent > 0 ? "Resume sending" : "Start sending"}
                   </Button>
                 )}
               </div>
               <p className="text-xs text-muted-foreground">
                 {active.batch_size} at a time, {active.gap_seconds}s apart, up to {active.daily_cap}{" "}
-                a day. Keep this page open while it runs.
+                a day.{" "}
+                {running
+                  ? "Sending is running on our servers — you can close the app or lock your phone and come back later."
+                  : "Sending runs in the background, so this page does not need to stay open."}
               </p>
               <ul className="max-h-64 space-y-1.5 overflow-y-auto">
                 {(recipients.data ?? []).map((row) => (
