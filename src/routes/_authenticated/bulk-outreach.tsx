@@ -109,7 +109,7 @@ type Message = { subject: string; body: string };
 
 const SUBJECT_MAX = 200;
 const BODY_MAX = 2000;
-const MAX_MESSAGES = 5;
+const MAX_MESSAGES = 10;
 
 const emptyMessage = (): Message => ({ subject: "", body: "" });
 
