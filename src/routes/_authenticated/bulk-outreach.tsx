@@ -309,17 +309,13 @@ function BulkOutreachPage() {
         contact_name: nameIndex !== undefined ? (row[nameIndex] ?? "").trim() || null : null,
         domain: domainIndex !== undefined ? (row[domainIndex] ?? "").trim() || null : null,
         brand: brandIndex >= 0 ? (row[brandIndex] ?? "").trim() || null : null,
+        row: buildRowData(parsed.headers, row),
       }));
       setFileRecipients((currentRows) => [...currentRows, ...rows]);
-      const found = [
-        nameIndex !== undefined ? "names" : null,
-        brandIndex >= 0 ? "brand / store names" : null,
-        domainIndex !== undefined ? "store links" : null,
-      ].filter(Boolean);
+      setSourceFiles((list) => (list.includes(file.name) ? list : [...list, file.name]));
+      setFileColumns((list) => [...new Set([...list, ...parsed.headers.filter(Boolean)])]);
       toast.success(
-        `${rows.length.toLocaleString()} rows read from ${file.name}${
-          found.length ? ` — ${found.join(", ")} picked up` : ""
-        }`,
+        `${rows.length.toLocaleString()} rows read from ${file.name} — every column is usable as a {tag}`,
       );
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "That file could not be read.");
