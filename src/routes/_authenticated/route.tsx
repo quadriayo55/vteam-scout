@@ -50,6 +50,8 @@ const NAV: { to: string; label: string; icon: typeof LayoutDashboard; need?: Nav
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/outreach", label: "Outreach Links", icon: Link2 },
   { to: "/bulk-outreach", label: "Bulk Outreach", icon: Send, need: "sendBulkEmail" },
+  { to: "/followups", label: "Follow Ups", icon: CalendarClock, need: "sendBulkEmail" },
+  { to: "/email-reports", label: "Email Reports", icon: MailCheck, need: "sendBulkEmail" },
   { to: "/connections", label: "Connections", icon: Plug, need: "manageConnections" },
   { to: "/campaigns", label: "Campaigns", icon: Megaphone, need: "manageCampaigns" },
   { to: "/scouting", label: "Scouting", icon: Radar, need: "manageProspects" },
