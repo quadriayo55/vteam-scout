@@ -126,6 +126,8 @@ function BulkOutreachPage() {
 
   const [raw, setRaw] = useState("");
   const [fileRecipients, setFileRecipients] = useState<Recipient[]>([]);
+  const [sourceFiles, setSourceFiles] = useState<string[]>([]);
+  const [fileColumns, setFileColumns] = useState<string[]>([]);
   const [name, setName] = useState("");
   const [messages, setMessages] = useState<Message[]>([emptyMessage()]);
   const [activeMessage, setActiveMessage] = useState(0);
