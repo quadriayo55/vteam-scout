@@ -26,4 +26,6 @@
 - Verunda Team AI: personalised message generator + conclusion message + deal-closed toggle + chat revisions
 - PC AutoScoutier: import outreach links as Gmail compose links
 - Send verification/reset emails from "Verunda Team Scoutier" branding
+- Follow Ups page + Email Reports page + dynamic merge tags (done this turn)
+- Save RESEND_WEBHOOK_SECRET in project secrets and add the webhook URL in Resend
 - Replace the text wordmark with the real logo (waiting on the logo file from you)
