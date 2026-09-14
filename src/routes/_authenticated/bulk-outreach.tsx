@@ -384,6 +384,8 @@ function BulkOutreachPage() {
           batch_size: Math.max(1, Math.min(batchSize, 100)),
           gap_seconds: Math.max(0, Math.min(gapSeconds, 3600)),
           daily_cap: Math.max(1, Math.min(dailyCap, 5000)),
+          source_files: sourceFiles,
+          merge_keys: mergeKeys,
           status: "ready",
         })
         .select("id")
@@ -405,6 +407,7 @@ function BulkOutreachPage() {
             contact_name: item.contact_name,
             domain: item.domain,
             brand: item.brand,
+            row_data: item.row ?? {},
             variant: picked,
           };
         });
