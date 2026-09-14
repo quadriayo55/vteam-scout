@@ -28,6 +28,8 @@ import {
   Radar,
   FileSpreadsheet,
   History,
+  CalendarClock,
+  MailCheck,
   LogOut,
   Loader2,
   Menu,
