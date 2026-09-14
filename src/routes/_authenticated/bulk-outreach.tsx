@@ -5,7 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
-import { sendBulkBatch, sendDraftTest } from "@/lib/bulk.functions";
+import { sendDraftTest, startBulkSend, stopBulkSend } from "@/lib/bulk.functions";
 import { writingAssist, type AssistMode } from "@/lib/ai.functions";
 import { isValidEmail, spamCheck, compact } from "@/lib/outreach";
 import { extractContacts, gradeList } from "@/lib/extract";
