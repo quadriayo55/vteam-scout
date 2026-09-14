@@ -198,6 +198,30 @@ function BulkOutreachPage() {
     };
   }, [raw, fileRecipients]);
 
+  /** Every tag the uploaded columns can fill, plus the built-in ones. */
+  const mergeKeys = useMemo(() => {
+    const keys = new Set<string>(fileColumns.map(normalizeKey).filter(Boolean));
+    for (const item of stats.recipients.slice(0, 200)) {
+      Object.keys(item.row ?? {}).forEach((key) => keys.add(key));
+      if (item.contact_name) keys.add("name");
+      if (item.brand) ["brand", "store", "company"].forEach((key) => keys.add(key));
+      if (item.domain) ["domain", "website"].forEach((key) => keys.add(key));
+    }
+    keys.add("email");
+    return [...keys].filter(Boolean).sort();
+  }, [fileColumns, stats.recipients]);
+
+  const usedMessages = rotationOn ? messages : [current];
+  const unknownTags = useMemo(
+    () =>
+      missingTags(
+        usedMessages.flatMap((item) => [item.subject, item.body]),
+        mergeKeys,
+      ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [JSON.stringify(usedMessages), mergeKeys],
+  );
+
   const subjectSpam = spamCheck(current.subject);
   const bodySpam = spamCheck(current.body);
 
