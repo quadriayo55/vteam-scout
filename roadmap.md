@@ -29,3 +29,4 @@
 - Follow Ups page + Email Reports page + dynamic merge tags (done this turn)
 - Save RESEND_WEBHOOK_SECRET in project secrets and add the webhook URL in Resend
 - Replace the text wordmark with the real logo (waiting on the logo file from you)
+- Bulk sending now runs server-side via Inngest (`bulk/send.start` event + `bulk-send-sweep` cron); Start/Stop buttons control it. After publishing, sync the Inngest endpoint once so the new jobs are discovered.

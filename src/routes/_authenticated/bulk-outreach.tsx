@@ -5,7 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
-import { sendBulkBatch, sendDraftTest } from "@/lib/bulk.functions";
+import { sendDraftTest, startBulkSend, stopBulkSend } from "@/lib/bulk.functions";
 import { writingAssist, type AssistMode } from "@/lib/ai.functions";
 import { isValidEmail, spamCheck, compact } from "@/lib/outreach";
 import { extractContacts, gradeList } from "@/lib/extract";
@@ -117,12 +117,12 @@ function BulkOutreachPage() {
   const { user } = useAuth();
   const tz = useTimeZone();
   const queryClient = useQueryClient();
-  const runBatch = useServerFn(sendBulkBatch);
+  const beginSend = useServerFn(startBulkSend);
+  const haltSend = useServerFn(stopBulkSend);
   const runTest = useServerFn(sendDraftTest);
   const runAssist = useServerFn(writingAssist);
   const emailSettings = useEmailSettings();
   const fileRef = useRef<HTMLInputElement>(null);
-  const stopRef = useRef(false);
 
   const [raw, setRaw] = useState("");
   const [fileRecipients, setFileRecipients] = useState<Recipient[]>([]);
@@ -139,7 +139,7 @@ function BulkOutreachPage() {
   const [gapSeconds, setGapSeconds] = useState(60);
   const [dailyCap, setDailyCap] = useState(5000);
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [running, setRunning] = useState(false);
+
   const [parsing, setParsing] = useState(false);
   const [assist, setAssist] = useState<{ title: string; text: string } | null>(null);
   const [assisting, setAssisting] = useState<AssistMode | null>(null);
@@ -254,6 +254,10 @@ function BulkOutreachPage() {
     },
   });
 
+  // The server owns the truth about a send, so the page just reads its status.
+  const active = (sends.data ?? []).find((row) => row.id === activeId);
+  const running = active?.status === "sending";
+
   const recipients = useQuery({
     queryKey: ["bulk-recipients", activeId],
     enabled: Boolean(activeId),
@@ -362,7 +366,6 @@ function BulkOutreachPage() {
         );
       }
 
-
       const total = stats.recipients.length;
       const { data: send, error } = await supabase
         .from("bulk_sends")
@@ -411,9 +414,7 @@ function BulkOutreachPage() {
             variant: picked,
           };
         });
-        const { error: chunkError } = await supabase
-          .from("bulk_send_recipients")
-          .insert(chunk);
+        const { error: chunkError } = await supabase.from("bulk_send_recipients").insert(chunk);
         if (chunkError) throw chunkError;
       }
       return send.id as string;
@@ -470,7 +471,6 @@ function BulkOutreachPage() {
       toast.error(error instanceof Error ? error.message : "That send could not be deleted."),
   });
 
-
   const saveTemplate = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error("Please sign in again.");
@@ -523,37 +523,39 @@ function BulkOutreachPage() {
       toast.error(error instanceof Error ? error.message : "Templates could not be reset."),
   });
 
-  async function start(sendId: string, gap: number) {
-    setActiveId(sendId);
-    setRunning(true);
-    stopRef.current = false;
-    try {
-      for (;;) {
-        if (stopRef.current) break;
-        const result = await runBatch({ data: { sendId } });
-        queryClient.invalidateQueries({ queryKey: ["bulk-sends"] });
-        queryClient.invalidateQueries({ queryKey: ["bulk-recipients", sendId] });
-        queryClient.invalidateQueries({ queryKey: ["sent-today"] });
-        const firstError = result.errors[0];
-        if (firstError) toast.error(firstError);
-        if (result.capReached) {
-          toast.warning("Daily limit reached — sending paused until tomorrow.");
-          break;
-        }
-        if (result.remaining === 0) {
-          toast.success("All emails sent.");
-          break;
-        }
-        if (gap > 0) await new Promise((resolve) => setTimeout(resolve, gap * 1000));
-      }
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Sending stopped unexpectedly.");
-    } finally {
-      setRunning(false);
-    }
+  function refreshSendViews(sendId: string) {
+    queryClient.invalidateQueries({ queryKey: ["bulk-sends"] });
+    queryClient.invalidateQueries({ queryKey: ["bulk-recipients", sendId] });
+    queryClient.invalidateQueries({ queryKey: ["sent-today"] });
   }
 
-  const active = (sends.data ?? []).find((row) => row.id === activeId);
+  const startSending = useMutation({
+    mutationFn: async (sendId: string) => {
+      await beginSend({ data: { sendId } });
+      return sendId;
+    },
+    onSuccess: (sendId) => {
+      setActiveId(sendId);
+      refreshSendViews(sendId);
+      toast.success("Sending started. You can close the app — it keeps going on its own.");
+    },
+    onError: (error) =>
+      toast.error(error instanceof Error ? error.message : "Sending could not be started."),
+  });
+
+  const stopSending = useMutation({
+    mutationFn: async (sendId: string) => {
+      await haltSend({ data: { sendId } });
+      return sendId;
+    },
+    onSuccess: (sendId) => {
+      refreshSendViews(sendId);
+      toast.success("Sending stopped. Press Start sending to pick up where it left off.");
+    },
+    onError: (error) =>
+      toast.error(error instanceof Error ? error.message : "Sending could not be stopped."),
+  });
+
   const shownTemplates: TemplateRow[] =
     templates.data && templates.data.length > 0
       ? templates.data
@@ -596,7 +598,9 @@ function BulkOutreachPage() {
               rows={5}
               value={raw}
               onChange={(event) => setRaw(event.target.value)}
-              placeholder={'Paste anything — one per line, comma soup, or "Jane Doe <jane@shop.com>"'}
+              placeholder={
+                'Paste anything — one per line, comma soup, or "Jane Doe <jane@shop.com>"'
+              }
             />
             <div className="flex flex-wrap items-center gap-2 text-xs">
               <Badge variant="secondary">{compact(stats.recipients.length)} valid</Badge>
@@ -802,9 +806,7 @@ function BulkOutreachPage() {
                   label="Analyse subject"
                   busy={assisting === "subject"}
                   icon={<Gauge className="size-3" />}
-                  onClick={() =>
-                    void callAssist("subject", "Subject line review", current.subject)
-                  }
+                  onClick={() => void callAssist("subject", "Subject line review", current.subject)}
                 />
               </div>
               <SpamHint level={subjectSpam.level} hits={subjectSpam.hits} />
@@ -990,9 +992,9 @@ function BulkOutreachPage() {
                   onChange={(event) => setBatchSize(Number(event.target.value) || 1)}
                 />
                 <p className="text-xs text-muted-foreground">
-                  How many emails go out in one go before the app pauses. With {batchSize} per batch,
-                  a list of 1,000 people is sent in small groups of {batchSize} rather than all at
-                  once — this looks natural and protects your sending reputation.
+                  How many emails go out in one go before the app pauses. With {batchSize} per
+                  batch, a list of 1,000 people is sent in small groups of {batchSize} rather than
+                  all at once — this looks natural and protects your sending reputation.
                 </p>
               </div>
               <div className="space-y-2">
@@ -1007,7 +1009,8 @@ function BulkOutreachPage() {
                 />
                 <p className="text-xs text-muted-foreground">
                   Waiting time before the next {batchSize} go out — roughly{" "}
-                  {compact(Math.round((batchSize * 3600) / Math.max(gapSeconds, 1)))} emails an hour.
+                  {compact(Math.round((batchSize * 3600) / Math.max(gapSeconds, 1)))} emails an
+                  hour.
                 </p>
               </div>
               <div className="space-y-2">
@@ -1018,9 +1021,7 @@ function BulkOutreachPage() {
                   min={1}
                   max={5000}
                   value={dailyCap}
-                  onChange={(event) =>
-                    setDailyCap(Math.min(Number(event.target.value) || 1, 5000))
-                  }
+                  onChange={(event) => setDailyCap(Math.min(Number(event.target.value) || 1, 5000))}
                 />
                 <p className="text-xs text-muted-foreground">
                   Most you'll send in one day — up to 5,000. Anything left over waits for tomorrow.
@@ -1186,26 +1187,33 @@ function BulkOutreachPage() {
                 />
                 <StatCard label="Failed" value={active.failed} tone="muted" />
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 {running ? (
                   <Button
                     variant="outline"
-                    onClick={() => {
-                      stopRef.current = true;
-                      setRunning(false);
-                    }}
+                    disabled={stopSending.isPending}
+                    onClick={() => stopSending.mutate(active.id)}
                   >
-                    <Pause className="mr-2 size-4" /> Pause
+                    <Pause className="mr-2 size-4" /> Stop sending
                   </Button>
+                ) : active.status === "completed" ? (
+                  <span className="text-sm text-emerald-400">All emails sent.</span>
                 ) : (
-                  <Button onClick={() => void start(active.id, active.gap_seconds)}>
-                    <Play className="mr-2 size-4" /> Start sending
+                  <Button
+                    disabled={startSending.isPending}
+                    onClick={() => startSending.mutate(active.id)}
+                  >
+                    <Play className="mr-2 size-4" />
+                    {active.sent > 0 ? "Resume sending" : "Start sending"}
                   </Button>
                 )}
               </div>
               <p className="text-xs text-muted-foreground">
                 {active.batch_size} at a time, {active.gap_seconds}s apart, up to {active.daily_cap}{" "}
-                a day. Keep this page open while it runs.
+                a day.{" "}
+                {running
+                  ? "Sending is running on our servers — you can close the app or lock your phone and come back later."
+                  : "Sending runs in the background, so this page does not need to stay open."}
               </p>
               <ul className="max-h-64 space-y-1.5 overflow-y-auto">
                 {(recipients.data ?? []).map((row) => (
@@ -1304,7 +1312,9 @@ function BulkOutreachPage() {
             <p className="text-xs text-muted-foreground">
               From: {sender.from_name} &lt;{senderAddress(sender)}&gt;
             </p>
-            <p className="font-semibold">{renderTemplate(current.subject, previewContext) || "(no subject)"}</p>
+            <p className="font-semibold">
+              {renderTemplate(current.subject, previewContext) || "(no subject)"}
+            </p>
             <p className="whitespace-pre-wrap text-muted-foreground">
               {renderTemplate(current.body, previewContext) || "(no message yet)"}
             </p>
@@ -1316,7 +1326,9 @@ function BulkOutreachPage() {
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>{assist?.title}</DialogTitle>
-            <DialogDescription>Suggestion only — nothing changes until you apply it.</DialogDescription>
+            <DialogDescription>
+              Suggestion only — nothing changes until you apply it.
+            </DialogDescription>
           </DialogHeader>
           <p className="max-h-72 overflow-y-auto whitespace-pre-wrap rounded-xl border border-border bg-surface/50 p-4 text-sm">
             {assist?.text}
@@ -1377,7 +1389,13 @@ function ProgressRing({ percent }: { percent: number }) {
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (Math.min(Math.max(percent, 0), 100) / 100) * circumference;
   return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} role="img" aria-label={`${percent}% sent`}>
+    <svg
+      width={size}
+      height={size}
+      viewBox={`0 0 ${size} ${size}`}
+      role="img"
+      aria-label={`${percent}% sent`}
+    >
       <circle
         cx={size / 2}
         cy={size / 2}
