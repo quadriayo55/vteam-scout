@@ -557,7 +557,15 @@ function BulkOutreachPage() {
     templates.data && templates.data.length > 0
       ? templates.data
       : STARTER_TEMPLATES.map((item, index) => ({ ...item, id: `starter-${index}` }));
-  const previewName = stats.recipients[0]?.contact_name ?? "there";
+  const previewRecipient = stats.recipients[0];
+  const previewName = previewRecipient?.contact_name ?? "there";
+  const previewContext = {
+    row: previewRecipient?.row ?? {},
+    name: previewRecipient?.contact_name ?? null,
+    brand: previewRecipient?.brand ?? null,
+    domain: previewRecipient?.domain ?? null,
+    email: previewRecipient?.email ?? null,
+  };
   const totalGenerated = (sends.data ?? []).reduce((sum, row) => sum + row.total, 0);
   const totalSent = (sends.data ?? []).reduce((sum, row) => sum + row.sent, 0);
 
