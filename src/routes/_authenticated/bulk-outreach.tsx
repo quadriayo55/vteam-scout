@@ -827,10 +827,33 @@ function BulkOutreachPage() {
               </div>
               <SpamHint level={bodySpam.level} hits={bodySpam.hits} />
               <p className="text-xs text-brand">
-                Personalisation on — <code>{"{name}"}</code> becomes the contact's name,{" "}
-                <code>{"{brand}"}</code> the brand or store name, and <code>{"{website}"}</code> the
-                store link from your file.
+                Personalisation on — every column in your file works as a tag. Click one to insert
+                it.
               </p>
+              {mergeKeys.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {mergeKeys.map((key) => (
+                    <button
+                      key={key}
+                      type="button"
+                      className="rounded-md border border-border bg-surface/60 px-2 py-1 text-[11px] font-medium transition-colors hover:bg-accent"
+                      onClick={() => updateMessage({ body: `${current.body}{${key}}` })}
+                    >
+                      {`{${key}}`}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {unknownTags.length > 0 && (
+                <p className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-2 text-xs font-medium text-destructive">
+                  <AlertTriangle className="mt-0.5 size-3.5 shrink-0" />
+                  <span>
+                    Your list has no column for {unknownTags.map((tag) => `{${tag}}`).join(", ")}.
+                    Sending is blocked until you fix or remove{" "}
+                    {unknownTags.length > 1 ? "those tags" : "that tag"}.
+                  </span>
+                </p>
+              )}
             </div>
 
             {/* Writing tools */}
