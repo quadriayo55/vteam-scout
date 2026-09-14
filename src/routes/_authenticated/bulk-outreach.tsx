@@ -176,7 +176,13 @@ function BulkOutreachPage() {
     };
 
     pasted.contacts.forEach((item) =>
-      push({ email: item.email, contact_name: item.contact_name, domain: null, brand: null }),
+      push({
+        email: item.email,
+        contact_name: item.contact_name,
+        domain: null,
+        brand: null,
+        row: {},
+      }),
     );
     fileRecipients.forEach(push);
 
