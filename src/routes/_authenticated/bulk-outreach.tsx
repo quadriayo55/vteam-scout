@@ -117,12 +117,12 @@ function BulkOutreachPage() {
   const { user } = useAuth();
   const tz = useTimeZone();
   const queryClient = useQueryClient();
-  const runBatch = useServerFn(sendBulkBatch);
+  const beginSend = useServerFn(startBulkSend);
+  const haltSend = useServerFn(stopBulkSend);
   const runTest = useServerFn(sendDraftTest);
   const runAssist = useServerFn(writingAssist);
   const emailSettings = useEmailSettings();
   const fileRef = useRef<HTMLInputElement>(null);
-  const stopRef = useRef(false);
 
   const [raw, setRaw] = useState("");
   const [fileRecipients, setFileRecipients] = useState<Recipient[]>([]);
