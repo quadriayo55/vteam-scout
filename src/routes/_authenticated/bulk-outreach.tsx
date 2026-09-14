@@ -88,6 +88,7 @@ type Recipient = {
   contact_name: string | null;
   domain: string | null;
   brand: string | null;
+  row: RowData;
 };
 
 const BRAND_HINTS = [
