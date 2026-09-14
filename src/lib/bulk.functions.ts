@@ -10,8 +10,24 @@ export type BatchResult = {
   errors: string[];
 };
 
+type MinimalSupabase = {
+  from: (table: "bulk_sends") => {
+    select: (columns: string) => {
+      eq: (
+        column: string,
+        value: string,
+      ) => {
+        maybeSingle: () => Promise<{
+          data: { id: string; user_id: string; status: string } | null;
+          error: { message: string } | null;
+        }>;
+      };
+    };
+  };
+};
+
 async function ownedSend(
-  supabase: { from: (table: string) => any },
+  supabase: MinimalSupabase,
   sendId: string,
   userId: string,
 ): Promise<{ id: string; status: string }> {
