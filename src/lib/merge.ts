@@ -105,26 +105,43 @@ export function missingTags(texts: string[], availableKeys: string[]): string[] 
   return [...missing];
 }
 
-/** Replaces every {tag} from the recipient's own row. */
+/**
+ * Replaces every {tag} from the recipient's own row.
+ *
+ * A tag with no value for this person (blank cell, or a column missing from the
+ * file their row came from) is removed rather than left on show — nobody should
+ * ever receive raw {placeholder} text. Leftover spacing and punctuation around
+ * the removed tag is tidied so the sentence still reads naturally.
+ */
 export function renderTemplate(template: string, context: MergeContext): string {
   const values = mergeValues(context);
   const hasName = Boolean(values["name"]);
 
-  const text = String(template ?? "").replace(TAG_PATTERN, (whole, rawTag: string) => {
+  const text = String(template ?? "").replace(TAG_PATTERN, (_whole, rawTag: string) => {
     const key = normalizeKey(rawTag);
     const value = values[key];
     if (value) return value;
     if (key === "name") return "there";
-    return whole;
+    return "";
   });
+
+  const tidied = text
+    // "in , and" / "at ." left behind by a dropped tag
+    .replace(/\b(in|at|on|for|from|with|to|of)\s+(?=[,.;:!?)])/gi, "")
+    .replace(/[ \t]{2,}/g, " ")
+    .replace(/[ \t]+([,.;:!?])/g, "$1")
+    .replace(/([,;:])\s*(?=[,.;:!?])/g, "")
+    .replace(/\n[ \t]+/g, "\n")
+    .replace(/\n{3,}/g, "\n\n");
 
   // Without a real name, "Hi there," reads fine but "Partnering with there" does not.
   return hasName
-    ? text
-    : text
+    ? tidied
+    : tidied
         .replace(/\b(with|for|to|at)\s+there\b/gi, (_m, word: string) => `${word} you`)
         .replace(/\bthere's\b/gi, "there's");
 }
+
 
 /**
  * Subject lines are the strongest signal Gmail uses to file mail under Promotions.
