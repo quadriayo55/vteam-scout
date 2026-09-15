@@ -31,6 +31,7 @@ import { Route as AuthenticatedTeamRouteImport } from './routes/_authenticated/t
 import { Route as JCodeRouteImport } from './routes/j.$code'
 import { Route as ApiPublicInngestRouteImport } from './routes/api/public/inngest'
 import { Route as ApiPublicResendEventsRouteImport } from './routes/api/public/resend-events'
+import { Route as ApiPublicHooksBulkTickRouteImport } from './routes/api/public/hooks/bulk-tick'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -145,6 +146,11 @@ const ApiPublicResendEventsRoute = ApiPublicResendEventsRouteImport.update({
   path: '/api/public/resend-events',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksBulkTickRoute = ApiPublicHooksBulkTickRouteImport.update({
+  id: '/api/public/hooks/bulk-tick',
+  path: '/api/public/hooks/bulk-tick',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -168,6 +174,7 @@ export interface FileRoutesByFullPath {
   '/j/$code': typeof JCodeRoute
   '/api/public/inngest': typeof ApiPublicInngestRoute
   '/api/public/resend-events': typeof ApiPublicResendEventsRoute
+  '/api/public/hooks/bulk-tick': typeof ApiPublicHooksBulkTickRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -191,6 +198,7 @@ export interface FileRoutesByTo {
   '/j/$code': typeof JCodeRoute
   '/api/public/inngest': typeof ApiPublicInngestRoute
   '/api/public/resend-events': typeof ApiPublicResendEventsRoute
+  '/api/public/hooks/bulk-tick': typeof ApiPublicHooksBulkTickRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -216,6 +224,7 @@ export interface FileRoutesById {
   '/j/$code': typeof JCodeRoute
   '/api/public/inngest': typeof ApiPublicInngestRoute
   '/api/public/resend-events': typeof ApiPublicResendEventsRoute
+  '/api/public/hooks/bulk-tick': typeof ApiPublicHooksBulkTickRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -241,6 +250,7 @@ export interface FileRouteTypes {
     | '/j/$code'
     | '/api/public/inngest'
     | '/api/public/resend-events'
+    | '/api/public/hooks/bulk-tick'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -264,6 +274,7 @@ export interface FileRouteTypes {
     | '/j/$code'
     | '/api/public/inngest'
     | '/api/public/resend-events'
+    | '/api/public/hooks/bulk-tick'
   id:
     | '__root__'
     | '/'
@@ -288,6 +299,7 @@ export interface FileRouteTypes {
     | '/j/$code'
     | '/api/public/inngest'
     | '/api/public/resend-events'
+    | '/api/public/hooks/bulk-tick'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -299,6 +311,7 @@ export interface RootRouteChildren {
   JCodeRoute: typeof JCodeRoute
   ApiPublicInngestRoute: typeof ApiPublicInngestRoute
   ApiPublicResendEventsRoute: typeof ApiPublicResendEventsRoute
+  ApiPublicHooksBulkTickRoute: typeof ApiPublicHooksBulkTickRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -457,6 +470,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicResendEventsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/bulk-tick': {
+      id: '/api/public/hooks/bulk-tick'
+      path: '/api/public/hooks/bulk-tick'
+      fullPath: '/api/public/hooks/bulk-tick'
+      preLoaderRoute: typeof ApiPublicHooksBulkTickRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -506,6 +526,7 @@ const rootRouteChildren: RootRouteChildren = {
   JCodeRoute: JCodeRoute,
   ApiPublicInngestRoute: ApiPublicInngestRoute,
   ApiPublicResendEventsRoute: ApiPublicResendEventsRoute,
+  ApiPublicHooksBulkTickRoute: ApiPublicHooksBulkTickRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

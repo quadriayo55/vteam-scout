@@ -62,15 +62,25 @@ export const startBulkSend = createServerFn({ method: "POST" })
       .eq("id", send.id);
     if (error) throw new Error(error.message);
 
-    const { sendInngestEvent } = await import("./inngest.server");
+    // Best effort nudge to the scheduler; the database heartbeat keeps the send
+    // moving every minute even if this fails, so it never blocks starting.
     try {
+      const { sendInngestEvent } = await import("./inngest.server");
       await sendInngestEvent("bulk/send.start", { sendId: send.id });
     } catch (problem) {
-      await supabase.from("bulk_sends").update({ status: "ready" }).eq("id", send.id);
-      throw problem;
+      console.error("[bulk] scheduler nudge failed:", problem);
+    }
+
+    // Send the first batch straight away so progress shows immediately.
+    try {
+      const { runBulkBatch } = await import("./bulk.server");
+      await runBulkBatch(send.id);
+    } catch (problem) {
+      console.error("[bulk] first batch failed:", problem);
     }
     return { status: "sending" };
   });
+
 
 /** Stops a send that is running. Anything already delivered stays delivered. */
 export const stopBulkSend = createServerFn({ method: "POST" })
