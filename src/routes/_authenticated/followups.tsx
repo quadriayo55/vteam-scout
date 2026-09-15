@@ -188,14 +188,16 @@ function FollowupsPage() {
       // Each step is timed from whatever the writer chose: the original send or the step before it.
       let previous = new Date();
       const rows = steps.map((step, index) => {
+        const wait = Math.max(0, Math.min(step.delayDays, 90));
         const from = step.anchor === "original" ? new Date() : previous;
-        const at = localSendTime(from, step.delayDays, tz, hour, minute);
+        // A zero-day wait means "go out now", so it is due the moment it is saved.
+        const at = wait === 0 ? new Date() : localSendTime(from, wait, tz, hour, minute);
         previous = at;
         return {
           sequence_id: sequence.id,
           user_id: user.id,
           position: index + 1,
-          delay_days: Math.max(1, Math.min(step.delayDays, 90)),
+          delay_days: wait,
           anchor: step.anchor,
           variants: step.messages.map((item) => ({
             subject: item.subject.slice(0, 200),
@@ -207,6 +209,7 @@ function FollowupsPage() {
           scheduled_at: at.toISOString(),
         };
       });
+
       const { error: stepError } = await supabase.from("followup_steps").insert(rows);
       if (stepError) throw stepError;
       return sequence.id as string;
@@ -425,11 +428,12 @@ function FollowupsPage() {
                 <Label>Wait (days)</Label>
                 <Input
                   type="number"
-                  min={1}
+                  min={0}
                   max={90}
                   value={step.delayDays}
                   onChange={(event) => patchStep(index, { delayDays: Number(event.target.value) })}
                 />
+
               </div>
               <div className="space-y-1.5">
                 <Label>Counted from</Label>

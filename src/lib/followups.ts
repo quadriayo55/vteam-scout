@@ -74,8 +74,10 @@ export function useSteps(sequenceId: string | null) {
 
 /** Plain-language description of when a step goes out. */
 export function stepTiming(delayDays: number, anchor: string, position: number) {
+  if (delayDays <= 0) return "straight away";
   const when = delayDays === 1 ? "1 day" : `${delayDays} days`;
   return anchor === "previous"
     ? `${when} after step ${position - 1 || 1}`
     : `${when} after the first email`;
 }
+
