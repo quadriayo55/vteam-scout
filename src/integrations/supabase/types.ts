@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           bounced_at: string | null
           brand: string | null
+          claimed_at: string | null
           click_count: number
           complained_at: string | null
           contact_name: string | null
@@ -44,6 +45,7 @@ export type Database = {
         Insert: {
           bounced_at?: string | null
           brand?: string | null
+          claimed_at?: string | null
           click_count?: number
           complained_at?: string | null
           contact_name?: string | null
@@ -70,6 +72,7 @@ export type Database = {
         Update: {
           bounced_at?: string | null
           brand?: string | null
+          claimed_at?: string | null
           click_count?: number
           complained_at?: string | null
           contact_name?: string | null
@@ -114,6 +117,7 @@ export type Database = {
           from_name: string
           gap_seconds: number
           id: string
+          locked_until: string | null
           merge_keys: Json
           name: string
           reply_to: string | null
@@ -139,6 +143,7 @@ export type Database = {
           from_name: string
           gap_seconds?: number
           id?: string
+          locked_until?: string | null
           merge_keys?: Json
           name: string
           reply_to?: string | null
@@ -164,6 +169,7 @@ export type Database = {
           from_name?: string
           gap_seconds?: number
           id?: string
+          locked_until?: string | null
           merge_keys?: Json
           name?: string
           reply_to?: string | null
@@ -1015,6 +1021,18 @@ export type Database = {
         }[]
       }
       can_view_user: { Args: { _user_id: string }; Returns: boolean }
+      claim_bulk_recipients: {
+        Args: { _limit: number; _send_id: string }
+        Returns: {
+          brand: string
+          contact_name: string
+          domain: string
+          email: string
+          id: string
+          row_data: Json
+          variant: number
+        }[]
+      }
       email_sent_daily: {
         Args: { _days?: number; _user_id?: string }
         Returns: {
@@ -1089,6 +1107,11 @@ export type Database = {
           team_id: string
           team_name: string
         }[]
+      }
+      release_bulk_send_lock: { Args: { _send_id: string }; Returns: undefined }
+      try_lock_bulk_send: {
+        Args: { _seconds?: number; _send_id: string }
+        Returns: boolean
       }
     }
     Enums: {
