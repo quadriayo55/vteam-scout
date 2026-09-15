@@ -30,3 +30,5 @@
 - Save RESEND_WEBHOOK_SECRET in project secrets and add the webhook URL in Resend
 - Replace the text wordmark with the real logo (waiting on the logo file from you)
 - Bulk sending now runs server-side via Inngest (`bulk/send.start` event + `bulk-send-sweep` cron); Start/Stop buttons control it. After publishing, sync the Inngest endpoint once so the new jobs are discovered.
+
+- Background sending no longer depends on Inngest sync: a database heartbeat (cron "bulk-send-tick", every minute) calls /api/public/hooks/bulk-tick (auth: BULK_TICK_SECRET header) which advances each running send by one batch and runs due follow-ups. Requires the app to be published.
