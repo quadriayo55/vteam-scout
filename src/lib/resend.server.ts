@@ -1,4 +1,5 @@
 import { inboxSubject, plainHtmlBody, renderTemplate, type MergeContext } from "./merge";
+import { isSuppressed, unsubscribeUrl } from "./suppression.server";
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/resend";
 
@@ -12,7 +13,14 @@ export type SendOneInput = {
   context: MergeContext;
 };
 
-export type SendOneResult = { ok: true; id: string | null } | { ok: false; error: string };
+export type SendOneResult =
+  | { ok: true; id: string | null }
+  | { ok: false; error: string; suppressed?: boolean };
+
+/** Cheap sanity check so a malformed address is never handed to the provider. */
+function looksLikeEmail(value: string): boolean {
+  return /^[^\s@,;:<>()"[\]]+@[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z]{2,})+$/i.test(value.trim());
+}
 
 /** Sends one personalised email through the connected Resend account. */
 export async function sendOneEmail(input: SendOneInput): Promise<SendOneResult> {
@@ -22,8 +30,21 @@ export async function sendOneEmail(input: SendOneInput): Promise<SendOneResult> 
     return { ok: false, error: "Email sending is not connected yet." };
   }
 
+  const to = input.to.trim().toLowerCase();
+  if (!looksLikeEmail(to)) {
+    return { ok: false, error: "That address is not a usable email address.", suppressed: true };
+  }
+  if (await isSuppressed(to)) {
+    return {
+      ok: false,
+      error: "Skipped: this address unsubscribed, bounced or reported a message before.",
+      suppressed: true,
+    };
+  }
+
   const subject = inboxSubject(renderTemplate(input.subject, input.context));
-  const text = renderTemplate(input.body, input.context);
+  const optOut = unsubscribeUrl(to);
+  const text = `${renderTemplate(input.body, input.context)}\n\nIf you would rather not hear from me, unsubscribe here: ${optOut}`;
 
   try {
     const response = await fetch(`${GATEWAY_URL}/emails`, {
@@ -35,13 +56,18 @@ export async function sendOneEmail(input: SendOneInput): Promise<SendOneResult> 
       },
       body: JSON.stringify({
         from: input.fromName ? `${input.fromName} <${input.fromEmail}>` : input.fromEmail,
-        to: [input.to],
+        to: [to],
         subject,
         text,
         // The HTML twin looks identical but lets the provider report opens/clicks.
         html: plainHtmlBody(text),
         reply_to: input.replyTo,
-        headers: { "X-Entity-Ref-ID": crypto.randomUUID() },
+        headers: {
+          "X-Entity-Ref-ID": crypto.randomUUID(),
+          // Spam filters expect bulk mail to offer a machine-readable opt-out.
+          "List-Unsubscribe": `<${optOut}>, <mailto:${input.replyTo}?subject=unsubscribe>`,
+          "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+        },
       }),
     });
 
