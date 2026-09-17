@@ -32,3 +32,4 @@
 - Bulk sending now runs server-side via Inngest (`bulk/send.start` event + `bulk-send-sweep` cron); Start/Stop buttons control it. After publishing, sync the Inngest endpoint once so the new jobs are discovered.
 
 - Background sending no longer depends on Inngest sync: a database heartbeat (cron "bulk-send-tick", every minute) calls /api/public/hooks/bulk-tick (auth: BULK_TICK_SECRET header) which advances each running send by one batch and runs due follow-ups. Requires the app to be published.
+- Duplicate sends fixed: one runner per send (try_lock_bulk_send/release_bulk_send_lock), contacts claimed before sending (claim_bulk_recipients, 15-min recovery), sent/failed totals recounted from rows.
