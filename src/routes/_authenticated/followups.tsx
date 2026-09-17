@@ -695,6 +695,100 @@ function FollowupsPage() {
         </div>
       </section>
 
+      <section className="space-y-4 rounded-2xl border border-border bg-surface/40 p-4 sm:p-5">
+        <div>
+          <h2 className="text-lg font-semibold">Saved follow-up messages</h2>
+          <p className="text-sm text-muted-foreground">
+            Write a message once, then attach it to any step with “Use a saved message”.
+          </p>
+        </div>
+
+        <div className="grid gap-3">
+          <div className="space-y-1.5">
+            <Label>Name</Label>
+            <Input
+              value={tplName}
+              onChange={(event) => setTplName(event.target.value)}
+              placeholder="Second nudge"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Subject</Label>
+            <Input
+              value={tplSubject}
+              onChange={(event) => setTplSubject(event.target.value)}
+              placeholder="Quick follow up"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Message</Label>
+            <Textarea
+              rows={5}
+              value={tplBody}
+              onChange={(event) => setTplBody(event.target.value)}
+              placeholder={"Hi {name}, just checking you saw my note about {brand}…"}
+            />
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={() => saveTemplate.mutate()} disabled={saveTemplate.isPending}>
+              {saveTemplate.isPending ? (
+                <Loader2 className="mr-2 size-4 animate-spin" />
+              ) : (
+                <Save className="mr-2 size-4" />
+              )}
+              {editingId ? "Update saved message" : "Save message"}
+            </Button>
+            {(editingId || tplName || tplSubject || tplBody) && (
+              <Button type="button" variant="ghost" onClick={resetTemplateForm}>
+                Clear
+              </Button>
+            )}
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          {templates.isLoading && <Loader2 className="size-5 animate-spin text-brand" />}
+          {!templates.isLoading && (templates.data ?? []).length === 0 && (
+            <p className="text-sm text-muted-foreground">No saved messages yet.</p>
+          )}
+          {(templates.data ?? []).map((item) => (
+            <div
+              key={item.id}
+              className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border bg-background/40 p-3"
+            >
+              <div className="min-w-0">
+                <p className="text-sm font-semibold">{item.name}</p>
+                <p className="truncate text-xs text-muted-foreground">{item.subject}</p>
+              </div>
+              <div className="flex items-center gap-1">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => {
+                    setEditingId(item.id);
+                    setTplName(item.name);
+                    setTplSubject(item.subject);
+                    setTplBody(item.body);
+                  }}
+                >
+                  <Pencil className="mr-1.5 size-3.5" /> Edit
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => deleteTemplate.mutate(item.id)}
+                  disabled={deleteTemplate.isPending}
+                >
+                  <Trash2 className="size-3.5" />
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+
+
       <section className="space-y-3">
         <h2 className="text-lg font-semibold">Your follow ups</h2>
         {sequences.isLoading && <Loader2 className="size-5 animate-spin text-brand" />}
