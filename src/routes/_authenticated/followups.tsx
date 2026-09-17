@@ -22,12 +22,15 @@ import {
   AlertTriangle,
   CalendarClock,
   Loader2,
+  Pencil,
   Play,
   Plus,
   Repeat,
+  Save,
   Trash2,
   Users,
 } from "lucide-react";
+
 
 export const Route = createFileRoute("/_authenticated/followups")({
   head: () => ({
