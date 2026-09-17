@@ -824,6 +824,17 @@ function FollowupsPage() {
                       Pause
                     </Button>
                   )}
+                  {sequence.status === "paused" && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => resume.mutate(sequence.id)}
+                      disabled={resume.isPending}
+                    >
+                      <Play className="mr-1.5 size-3.5" /> Continue
+                    </Button>
+                  )}
+
                   <Button size="sm" variant="ghost" onClick={() => remove.mutate(sequence.id)}>
                     <Trash2 className="size-3.5" />
                   </Button>
