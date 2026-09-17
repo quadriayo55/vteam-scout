@@ -320,6 +320,23 @@ function FollowupsPage() {
     onError: () => toast.error("That could not be paused."),
   });
 
+  const resume = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("followup_sequences")
+        .update({ status: "active", updated_at: new Date().toISOString() })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["followup-sequences"] });
+      queryClient.invalidateQueries({ queryKey: ["followup-steps"] });
+      toast.success("Continuing. Anything already due goes out shortly.");
+    },
+    onError: () => toast.error("That could not be continued."),
+  });
+
+
   const remove = useMutation({
     mutationFn: async (id: string) => {
       await supabase.from("followup_steps").delete().eq("sequence_id", id);
