@@ -151,6 +151,12 @@ export const Route = createFileRoute("/api/public/resend-events")({
           patch["replied_at"] = occurredAt;
         }
 
+        // A bounce or a spam report means never email this address again.
+        if (address && (type.endsWith("bounced") || type.endsWith("complained"))) {
+          const { suppress } = await import("@/lib/suppression.server");
+          await suppress(address, type.endsWith("bounced") ? "bounced" : "complained");
+        }
+
         if (Object.keys(patch).length > 0) {
           await supabaseAdmin
             .from("bulk_send_recipients")

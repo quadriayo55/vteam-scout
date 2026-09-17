@@ -31,6 +31,7 @@ import { Route as AuthenticatedTeamRouteImport } from './routes/_authenticated/t
 import { Route as JCodeRouteImport } from './routes/j.$code'
 import { Route as ApiPublicInngestRouteImport } from './routes/api/public/inngest'
 import { Route as ApiPublicResendEventsRouteImport } from './routes/api/public/resend-events'
+import { Route as ApiPublicUnsubscribeRouteImport } from './routes/api/public/unsubscribe'
 import { Route as ApiPublicHooksBulkTickRouteImport } from './routes/api/public/hooks/bulk-tick'
 
 const IndexRoute = IndexRouteImport.update({
@@ -146,6 +147,11 @@ const ApiPublicResendEventsRoute = ApiPublicResendEventsRouteImport.update({
   path: '/api/public/resend-events',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicUnsubscribeRoute = ApiPublicUnsubscribeRouteImport.update({
+  id: '/api/public/unsubscribe',
+  path: '/api/public/unsubscribe',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicHooksBulkTickRoute = ApiPublicHooksBulkTickRouteImport.update({
   id: '/api/public/hooks/bulk-tick',
   path: '/api/public/hooks/bulk-tick',
@@ -174,6 +180,7 @@ export interface FileRoutesByFullPath {
   '/j/$code': typeof JCodeRoute
   '/api/public/inngest': typeof ApiPublicInngestRoute
   '/api/public/resend-events': typeof ApiPublicResendEventsRoute
+  '/api/public/unsubscribe': typeof ApiPublicUnsubscribeRoute
   '/api/public/hooks/bulk-tick': typeof ApiPublicHooksBulkTickRoute
 }
 export interface FileRoutesByTo {
@@ -198,6 +205,7 @@ export interface FileRoutesByTo {
   '/j/$code': typeof JCodeRoute
   '/api/public/inngest': typeof ApiPublicInngestRoute
   '/api/public/resend-events': typeof ApiPublicResendEventsRoute
+  '/api/public/unsubscribe': typeof ApiPublicUnsubscribeRoute
   '/api/public/hooks/bulk-tick': typeof ApiPublicHooksBulkTickRoute
 }
 export interface FileRoutesById {
@@ -224,6 +232,7 @@ export interface FileRoutesById {
   '/j/$code': typeof JCodeRoute
   '/api/public/inngest': typeof ApiPublicInngestRoute
   '/api/public/resend-events': typeof ApiPublicResendEventsRoute
+  '/api/public/unsubscribe': typeof ApiPublicUnsubscribeRoute
   '/api/public/hooks/bulk-tick': typeof ApiPublicHooksBulkTickRoute
 }
 export interface FileRouteTypes {
@@ -250,6 +259,7 @@ export interface FileRouteTypes {
     | '/j/$code'
     | '/api/public/inngest'
     | '/api/public/resend-events'
+    | '/api/public/unsubscribe'
     | '/api/public/hooks/bulk-tick'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -274,6 +284,7 @@ export interface FileRouteTypes {
     | '/j/$code'
     | '/api/public/inngest'
     | '/api/public/resend-events'
+    | '/api/public/unsubscribe'
     | '/api/public/hooks/bulk-tick'
   id:
     | '__root__'
@@ -299,6 +310,7 @@ export interface FileRouteTypes {
     | '/j/$code'
     | '/api/public/inngest'
     | '/api/public/resend-events'
+    | '/api/public/unsubscribe'
     | '/api/public/hooks/bulk-tick'
   fileRoutesById: FileRoutesById
 }
@@ -311,6 +323,7 @@ export interface RootRouteChildren {
   JCodeRoute: typeof JCodeRoute
   ApiPublicInngestRoute: typeof ApiPublicInngestRoute
   ApiPublicResendEventsRoute: typeof ApiPublicResendEventsRoute
+  ApiPublicUnsubscribeRoute: typeof ApiPublicUnsubscribeRoute
   ApiPublicHooksBulkTickRoute: typeof ApiPublicHooksBulkTickRoute
 }
 
@@ -470,6 +483,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicResendEventsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/unsubscribe': {
+      id: '/api/public/unsubscribe'
+      path: '/api/public/unsubscribe'
+      fullPath: '/api/public/unsubscribe'
+      preLoaderRoute: typeof ApiPublicUnsubscribeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/bulk-tick': {
       id: '/api/public/hooks/bulk-tick'
       path: '/api/public/hooks/bulk-tick'
@@ -526,6 +546,7 @@ const rootRouteChildren: RootRouteChildren = {
   JCodeRoute: JCodeRoute,
   ApiPublicInngestRoute: ApiPublicInngestRoute,
   ApiPublicResendEventsRoute: ApiPublicResendEventsRoute,
+  ApiPublicUnsubscribeRoute: ApiPublicUnsubscribeRoute,
   ApiPublicHooksBulkTickRoute: ApiPublicHooksBulkTickRoute,
 }
 export const routeTree = rootRouteImport
