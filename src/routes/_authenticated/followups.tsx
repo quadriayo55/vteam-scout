@@ -578,7 +578,47 @@ function FollowupsPage() {
 
             {step.messages.map((message, messageIndex) => (
               <div key={messageIndex} className="space-y-2">
-                <Label className="text-xs">Message {messageIndex + 1} subject</Label>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <Label className="text-xs">Message {messageIndex + 1} subject</Label>
+                  <div className="flex items-center gap-2">
+                    <select
+                      value=""
+                      onChange={(event) => {
+                        const picked = (templates.data ?? []).find(
+                          (item) => item.id === event.target.value,
+                        );
+                        if (!picked) return;
+                        patchMessage(index, messageIndex, {
+                          subject: picked.subject,
+                          body: picked.body,
+                        });
+                        toast.success(`"${picked.name}" attached.`);
+                      }}
+                      className="h-8 rounded-lg border border-border bg-background px-2 text-xs"
+                    >
+                      <option value="">Use a saved message…</option>
+                      {(templates.data ?? []).map((item) => (
+                        <option key={item.id} value={item.id}>
+                          {item.name}
+                        </option>
+                      ))}
+                    </select>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        setEditingId(null);
+                        setTplName(message.subject.trim() || `Step ${index + 1} message`);
+                        setTplSubject(message.subject);
+                        setTplBody(message.body);
+                        toast.info("Ready to save below — give it a name.");
+                      }}
+                    >
+                      <Save className="mr-1.5 size-3.5" /> Save
+                    </Button>
+                  </div>
+                </div>
                 <Input
                   value={message.subject}
                   onChange={(event) =>
@@ -596,6 +636,7 @@ function FollowupsPage() {
                 />
               </div>
             ))}
+
 
             {step.messages.length > 1 && (
               <div className="space-y-1.5">
