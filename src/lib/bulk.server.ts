@@ -28,7 +28,31 @@ async function pendingCount(sendId: string): Promise<number> {
   return count ?? 0;
 }
 
-/** Sends one batch of a send. Safe to call repeatedly; it stops itself when paused or finished. */
+async function recountTotals(sendId: string): Promise<{ sent: number; failed: number }> {
+  const [{ count: sent }, { count: failed }] = await Promise.all([
+    supabaseAdmin
+      .from("bulk_send_recipients")
+      .select("id", { count: "exact", head: true })
+      .eq("send_id", sendId)
+      .eq("status", "sent"),
+    supabaseAdmin
+      .from("bulk_send_recipients")
+      .select("id", { count: "exact", head: true })
+      .eq("send_id", sendId)
+      .eq("status", "failed"),
+  ]);
+  return { sent: sent ?? 0, failed: failed ?? 0 };
+}
+
+function idle(status: string, remaining: number, capReached = false): BatchOutcome {
+  return { sent: 0, failed: 0, remaining, capReached, status, errors: [], stopped: true };
+}
+
+/**
+ * Sends one batch of a send. Safe to call repeatedly and safe to call from two
+ * places at once: only one runner can hold a send at a time, and every contact
+ * is claimed in the database before any email goes out, so nobody is emailed twice.
+ */
 export async function runBulkBatch(sendId: string): Promise<BatchOutcome> {
   const { data: send, error: sendError } = await supabaseAdmin
     .from("bulk_sends")
@@ -36,156 +60,138 @@ export async function runBulkBatch(sendId: string): Promise<BatchOutcome> {
     .eq("id", sendId)
     .maybeSingle();
   if (sendError) throw new Error(sendError.message);
-  if (!send) {
-    return {
-      sent: 0,
-      failed: 0,
-      remaining: 0,
-      capReached: false,
-      status: "missing",
-      errors: [],
-      stopped: true,
-    };
-  }
+  if (!send) return idle("missing", 0);
+  if (send.status !== "sending") return idle(send.status, await pendingCount(send.id));
 
-  if (send.status !== "sending") {
-    return {
-      sent: 0,
-      failed: 0,
-      remaining: await pendingCount(send.id),
-      capReached: false,
-      status: send.status,
-      errors: [],
-      stopped: true,
-    };
-  }
+  // One runner at a time per send.
+  const { data: gotLock } = await supabaseAdmin.rpc("try_lock_bulk_send", {
+    _send_id: send.id,
+    _seconds: 300,
+  });
+  if (!gotLock) return idle("sending", await pendingCount(send.id));
 
-  // Daily cap, counted in Lagos time for the owner of the send.
-  const lagos = new Date(Date.now() + 60 * 60 * 1000);
-  lagos.setUTCHours(0, 0, 0, 0);
-  const sinceIso = new Date(lagos.getTime() - 60 * 60 * 1000).toISOString();
+  try {
+    // Daily cap, counted in Lagos time for the owner of the send.
+    const lagos = new Date(Date.now() + 60 * 60 * 1000);
+    lagos.setUTCHours(0, 0, 0, 0);
+    const sinceIso = new Date(lagos.getTime() - 60 * 60 * 1000).toISOString();
 
-  const { count: sentToday } = await supabaseAdmin
-    .from("bulk_send_recipients")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", send.user_id)
-    .eq("status", "sent")
-    .gte("sent_at", sinceIso);
+    const { count: sentToday } = await supabaseAdmin
+      .from("bulk_send_recipients")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", send.user_id)
+      .eq("status", "sent")
+      .gte("sent_at", sinceIso);
 
-  const capLeft = Math.max(send.daily_cap - (sentToday ?? 0), 0);
-  if (capLeft === 0) {
+    const capLeft = Math.max(send.daily_cap - (sentToday ?? 0), 0);
+    if (capLeft === 0) {
+      await supabaseAdmin
+        .from("bulk_sends")
+        .update({ status: "paused", updated_at: new Date().toISOString() })
+        .eq("id", send.id);
+      return idle("paused", await pendingCount(send.id), true);
+    }
+
+    const take = Math.min(send.batch_size, capLeft);
+    const { data: recipients, error: claimError } = await supabaseAdmin.rpc(
+      "claim_bulk_recipients",
+      { _send_id: send.id, _limit: take },
+    );
+    if (claimError) throw new Error(claimError.message);
+
+    const replyTo = send.reply_to?.trim() || "quadri@verunda.com";
+
+    const rawVariants = Array.isArray(send.variants) ? send.variants : [];
+    const variants = rawVariants
+      .map((item) => {
+        const record = (item ?? {}) as { subject?: unknown; body?: unknown };
+        return {
+          subject: String(record.subject ?? "").trim(),
+          body: String(record.body ?? "").trim(),
+        };
+      })
+      .filter((item) => item.subject || item.body);
+
+    let sent = 0;
+    let failed = 0;
+    const errors: string[] = [];
+
+    for (const recipient of recipients ?? []) {
+      const variant = variants[recipient.variant ?? 0];
+      const result = await sendOneEmail({
+        fromName: send.from_name,
+        fromEmail: send.from_email,
+        replyTo,
+        to: recipient.email,
+        subject: variant?.subject || send.subject,
+        body: variant?.body || send.body,
+        context: {
+          row: (recipient.row_data ?? {}) as RowData,
+          name: recipient.contact_name,
+          brand: recipient.brand,
+          domain: recipient.domain,
+          email: recipient.email,
+        },
+      });
+
+      if (result.ok) {
+        sent += 1;
+        await supabaseAdmin
+          .from("bulk_send_recipients")
+          .update({
+            status: "sent",
+            sent_at: new Date().toISOString(),
+            provider_id: result.id,
+            error: null,
+          })
+          .eq("id", recipient.id);
+      } else {
+        failed += 1;
+        if (errors.length < 3) errors.push(result.error);
+        await supabaseAdmin
+          .from("bulk_send_recipients")
+          .update({ status: "failed", error: result.error.slice(0, 500) })
+          .eq("id", recipient.id);
+      }
+    }
+
+    const remaining = await pendingCount(send.id);
+
+    // Someone may have pressed Stop while this batch was going out.
+    const { data: fresh } = await supabaseAdmin
+      .from("bulk_sends")
+      .select("status")
+      .eq("id", send.id)
+      .maybeSingle();
+    const wasStopped = fresh?.status !== "sending";
+
+    const status =
+      remaining === 0 ? "completed" : wasStopped ? (fresh?.status ?? "paused") : "sending";
+
+    // Counted fresh from the rows, so two runs can never inflate the totals.
+    const totals = await recountTotals(send.id);
     await supabaseAdmin
       .from("bulk_sends")
-      .update({ status: "paused", updated_at: new Date().toISOString() })
+      .update({
+        sent: totals.sent,
+        failed: totals.failed,
+        status,
+        updated_at: new Date().toISOString(),
+      })
       .eq("id", send.id);
+
     return {
-      sent: 0,
-      failed: 0,
-      remaining: await pendingCount(send.id),
-      capReached: true,
-      status: "paused",
-      errors: [],
-      stopped: true,
-    };
-  }
-
-  const take = Math.min(send.batch_size, capLeft);
-  const { data: recipients, error: recipientError } = await supabaseAdmin
-    .from("bulk_send_recipients")
-    .select("id, email, contact_name, variant, brand, domain, row_data")
-    .eq("send_id", send.id)
-    .eq("status", "pending")
-    .order("created_at", { ascending: true })
-    .limit(take);
-  if (recipientError) throw new Error(recipientError.message);
-
-  const replyTo = send.reply_to?.trim() || "quadri@verunda.com";
-
-  const rawVariants = Array.isArray(send.variants) ? send.variants : [];
-  const variants = rawVariants
-    .map((item) => {
-      const record = (item ?? {}) as { subject?: unknown; body?: unknown };
-      return {
-        subject: String(record.subject ?? "").trim(),
-        body: String(record.body ?? "").trim(),
-      };
-    })
-    .filter((item) => item.subject || item.body);
-
-  let sent = 0;
-  let failed = 0;
-  const errors: string[] = [];
-
-  for (const recipient of recipients ?? []) {
-    const variant = variants[recipient.variant ?? 0];
-    const result = await sendOneEmail({
-      fromName: send.from_name,
-      fromEmail: send.from_email,
-      replyTo,
-      to: recipient.email,
-      subject: variant?.subject || send.subject,
-      body: variant?.body || send.body,
-      context: {
-        row: (recipient.row_data ?? {}) as RowData,
-        name: recipient.contact_name,
-        brand: recipient.brand,
-        domain: recipient.domain,
-        email: recipient.email,
-      },
-    });
-
-    if (result.ok) {
-      sent += 1;
-      await supabaseAdmin
-        .from("bulk_send_recipients")
-        .update({
-          status: "sent",
-          sent_at: new Date().toISOString(),
-          provider_id: result.id,
-          error: null,
-        })
-        .eq("id", recipient.id);
-    } else {
-      failed += 1;
-      if (errors.length < 3) errors.push(result.error);
-      await supabaseAdmin
-        .from("bulk_send_recipients")
-        .update({ status: "failed", error: result.error.slice(0, 500) })
-        .eq("id", recipient.id);
-    }
-  }
-
-  const remaining = await pendingCount(send.id);
-
-  // Someone may have pressed Stop while this batch was going out.
-  const { data: fresh } = await supabaseAdmin
-    .from("bulk_sends")
-    .select("status")
-    .eq("id", send.id)
-    .maybeSingle();
-  const wasStopped = fresh?.status !== "sending";
-
-  const status =
-    remaining === 0 ? "completed" : wasStopped ? (fresh?.status ?? "paused") : "sending";
-  await supabaseAdmin
-    .from("bulk_sends")
-    .update({
-      sent: send.sent + sent,
-      failed: send.failed + failed,
+      sent,
+      failed,
+      remaining,
+      capReached: false,
       status,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", send.id);
-
-  return {
-    sent,
-    failed,
-    remaining,
-    capReached: false,
-    status,
-    errors,
-    stopped: remaining === 0 || wasStopped,
-  };
+      errors,
+      stopped: remaining === 0 || wasStopped,
+    };
+  } finally {
+    await supabaseAdmin.rpc("release_bulk_send_lock", { _send_id: send.id });
+  }
 }
 
 /**
