@@ -146,7 +146,20 @@ export async function runDueFollowups(): Promise<RunSummary> {
         },
       });
 
-      if (result.ok) {
+      if (!result.ok && result.suppressed) {
+        // Unsubscribed, previously bounced or malformed: left out, not a failure.
+        skipped += 1;
+        await supabaseAdmin.from("followup_deliveries").insert({
+          step_id: step.id,
+          sequence_id: sequence.id,
+          recipient_id: recipient.id,
+          user_id: step.user_id,
+          email: recipient.email,
+          status: "skipped",
+          variant: pick,
+          error: result.error.slice(0, 500),
+        });
+      } else if (result.ok) {
         sent += 1;
         await supabaseAdmin.from("followup_deliveries").insert({
           step_id: step.id,

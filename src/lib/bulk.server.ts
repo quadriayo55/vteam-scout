@@ -145,6 +145,12 @@ export async function runBulkBatch(sendId: string): Promise<BatchOutcome> {
             error: null,
           })
           .eq("id", recipient.id);
+      } else if (result.suppressed) {
+        // Unsubscribed, previously bounced or malformed: set aside, not a failure.
+        await supabaseAdmin
+          .from("bulk_send_recipients")
+          .update({ status: "skipped", error: result.error.slice(0, 500) })
+          .eq("id", recipient.id);
       } else {
         failed += 1;
         if (errors.length < 3) errors.push(result.error);
