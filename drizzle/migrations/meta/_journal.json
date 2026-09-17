@@ -148,6 +148,13 @@
       "when": 1789502478443,
       "tag": "0020_bulk_send_batch_locking",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1789686188051,
+      "tag": "0021_email_suppressions",
+      "breakpoints": true
     }
   ]
 }
