@@ -112,6 +112,83 @@ function FollowupsPage() {
   const sequences = useSequences(user?.id);
   const stepsOf = useSteps(openSequence);
 
+  // Saved follow-up messages you can reuse, edit and delete.
+  const templates = useQuery({
+    queryKey: ["followup-templates", user?.id ?? null],
+    enabled: Boolean(user?.id),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("email_templates")
+        .select("id,name,subject,body")
+        .eq("category", "Follow-up")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [tplName, setTplName] = useState("");
+  const [tplSubject, setTplSubject] = useState("");
+  const [tplBody, setTplBody] = useState("");
+
+  function resetTemplateForm() {
+    setEditingId(null);
+    setTplName("");
+    setTplSubject("");
+    setTplBody("");
+  }
+
+  const saveTemplate = useMutation({
+    mutationFn: async () => {
+      if (!user) throw new Error("Please sign in again.");
+      const payload = {
+        name: tplName.trim(),
+        subject: tplSubject.trim(),
+        body: tplBody.trim(),
+        category: "Follow-up",
+      };
+      if (!payload.name) throw new Error("Give this saved message a name.");
+      if (!payload.subject || !payload.body) throw new Error("Add both a subject and a message.");
+      if (editingId) {
+        const { error } = await supabase
+          .from("email_templates")
+          .update(payload)
+          .eq("id", editingId);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("email_templates")
+          .insert({ ...payload, user_id: user.id });
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      const wasEditing = Boolean(editingId);
+      resetTemplateForm();
+      queryClient.invalidateQueries({ queryKey: ["followup-templates"] });
+      queryClient.invalidateQueries({ queryKey: ["email-templates"] });
+      toast.success(wasEditing ? "Saved message updated." : "Message saved for reuse.");
+    },
+    onError: (error) =>
+      toast.error(error instanceof Error ? error.message : "That could not be saved."),
+  });
+
+  const deleteTemplate = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("email_templates").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: (_data, id) => {
+      if (editingId === id) resetTemplateForm();
+      queryClient.invalidateQueries({ queryKey: ["followup-templates"] });
+      queryClient.invalidateQueries({ queryKey: ["email-templates"] });
+      toast.success("Saved message deleted.");
+    },
+    onError: () => toast.error("That could not be deleted."),
+  });
+
+
   const chosen = (sends.data ?? []).find((item) => item.id === sendId);
   const mergeKeys = useMemo(() => {
     const raw = Array.isArray(chosen?.merge_keys) ? (chosen?.merge_keys as unknown[]) : [];
