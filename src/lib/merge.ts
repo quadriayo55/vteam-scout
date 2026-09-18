@@ -163,8 +163,10 @@ export function inboxSubject(subject: string): string {
 /**
  * Plain-looking HTML twin of the text body. Sending both lets the provider
  * report opens and clicks while the message still reads like a typed email.
+ * The opt-out is added as a tidy "Unsubscribe" word rather than a long raw
+ * address, which reads better and looks less like machine-generated mail.
  */
-export function plainHtmlBody(text: string): string {
+export function plainHtmlBody(text: string, optOutUrl?: string): string {
   const escaped = String(text ?? "")
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
@@ -173,5 +175,8 @@ export function plainHtmlBody(text: string): string {
     /(https?:\/\/[^\s<]+)/g,
     (url) => `<a href="${url}" style="color:#1155cc">${url}</a>`,
   );
-  return `<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;color:#111111;white-space:pre-wrap">${withLinks}</div>`;
+  const footer = optOutUrl
+    ? `<div style="margin-top:18px;font-size:12px;color:#777777">If you would rather not hear from me, <a href="${optOutUrl}" style="color:#777777">unsubscribe</a>.</div>`
+    : "";
+  return `<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;color:#111111;white-space:pre-wrap">${withLinks}</div>${footer}`;
 }
