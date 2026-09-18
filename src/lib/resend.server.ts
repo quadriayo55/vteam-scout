@@ -6,7 +6,8 @@ const GATEWAY_URL = "https://connector-gateway.lovable.dev/resend";
 export type SendOneInput = {
   fromName: string;
   fromEmail: string;
-  replyTo: string;
+  /** Any address, on any provider (Gmail included). Left out when blank or malformed. */
+  replyTo?: string | null;
   to: string;
   subject: string;
   body: string;
