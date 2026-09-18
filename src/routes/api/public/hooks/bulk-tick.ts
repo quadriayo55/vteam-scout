@@ -17,6 +17,17 @@ async function tick(request: Request): Promise<Response> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { runBulkBatch } = await import("@/lib/bulk.server");
 
+  const runFollowups = async () => {
+    try {
+      const { runDueFollowups } = await import("@/lib/followups.server");
+      const outcome = await runDueFollowups();
+      return (outcome as { sent?: number } | undefined)?.sent ?? 0;
+    } catch (problem) {
+      console.error("[bulk-tick] follow-ups failed:", problem);
+      return 0;
+    }
+  };
+
   const { data: running } = await supabaseAdmin
     .from("bulk_sends")
     .select("id, gap_seconds, updated_at")
@@ -25,6 +36,10 @@ async function tick(request: Request): Promise<Response> {
     .limit(5);
 
   const results: Array<{ sendId: string; sent: number; failed: number; status: string }> = [];
+  // Alternate priority each minute. The shared gate still releases only one
+  // message, while this prevents a large bulk send from starving follow-ups.
+  const followupsFirst = new Date().getUTCMinutes() % 2 === 0;
+  let followups = followupsFirst ? await runFollowups() : 0;
 
   for (const send of running ?? []) {
     const quietFor = Date.now() - new Date(send.updated_at).getTime();
@@ -43,14 +58,7 @@ async function tick(request: Request): Promise<Response> {
     }
   }
 
-  let followups = 0;
-  try {
-    const { runDueFollowups } = await import("@/lib/followups.server");
-    const outcome = await runDueFollowups();
-    followups = (outcome as { sent?: number } | undefined)?.sent ?? 0;
-  } catch (problem) {
-    console.error("[bulk-tick] follow-ups failed:", problem);
-  }
+  if (!followupsFirst) followups = await runFollowups();
 
   return Response.json({ ok: true, batches: results, followups });
 }
