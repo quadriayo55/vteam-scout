@@ -262,9 +262,16 @@ function ConnectionsPage() {
                 setTouched(true);
                 setForm({ ...form, reply_to: event.target.value });
               }}
-              placeholder="quadri@verunda.com"
+              placeholder="verudateam@gmail.com"
             />
+            <p className="text-xs text-muted-foreground">
+              Any inbox works here — Gmail, Outlook or your own domain. Change it whenever you
+              like: replies land there while the email is still signed by{" "}
+              {form.from_domain || "your domain"}, so spam filters are not affected. Leave it empty
+              and replies come back to {senderAddress(form)}.
+            </p>
           </div>
+
 
           <div className="flex flex-wrap gap-2">
             <Button onClick={() => save.mutate()} disabled={save.isPending}>
