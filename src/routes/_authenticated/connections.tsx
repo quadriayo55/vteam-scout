@@ -93,7 +93,7 @@ function ConnectionsPage() {
         from_local: local,
         from_domain: form.from_domain.trim().toLowerCase(),
         from_name: form.from_name.trim() || "Verunda Team Scoutier",
-        reply_to: form.reply_to?.trim() || null,
+        reply_to: replyTo || null,
         updated_at: new Date().toISOString(),
       };
       const { error } = await supabase.from("email_settings").upsert(row, { onConflict: "user_id" });
