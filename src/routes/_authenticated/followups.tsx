@@ -458,7 +458,7 @@ function FollowupsPage() {
               <Input
                 type="number"
                 min={1}
-                max={1}
+                max={100}
                 value={batchSize}
                 readOnly
               />
@@ -467,7 +467,7 @@ function FollowupsPage() {
               <Label>Seconds between batches</Label>
               <Input
                 type="number"
-                min={60}
+                min={15}
                 max={3600}
                 value={gapSeconds}
                 readOnly
