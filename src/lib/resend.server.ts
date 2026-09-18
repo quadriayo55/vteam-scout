@@ -69,7 +69,7 @@ export async function sendOneEmail(input: SendOneInput): Promise<SendOneResult> 
         subject,
         text,
         // The HTML twin looks identical but lets the provider report opens/clicks.
-        html: plainHtmlBody(text),
+        html: plainHtmlBody(message, optOut),
         ...(usableReply ? { reply_to: usableReply } : {}),
         headers: {
           "X-Entity-Ref-ID": crypto.randomUUID(),
