@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { sendOneEmail } from "./resend.server";
+import { claimEmailSendSlot } from "./email-warmup.server";
 import type { RowData } from "./merge";
 
 /**
@@ -97,11 +98,14 @@ export async function runDueFollowups(): Promise<RunSummary> {
     const already = new Set((done ?? []).map((row) => row.recipient_id));
 
     const queue = (recipients ?? []).filter((row) => !already.has(row.id));
-    const batch = queue.slice(0, Math.max(1, sequence.batch_size));
+    // The shared warm-up gate permits one outreach message per minute across
+    // bulk sends and every active follow-up sequence.
+    const batch = queue.slice(0, 1);
 
     let sent = 0;
     let failed = 0;
     let skipped = 0;
+    let processed = 0;
 
     for (const [offset, recipient] of batch.entries()) {
       const index = already.size + offset;
@@ -116,6 +120,7 @@ export async function runDueFollowups(): Promise<RunSummary> {
 
       if (excluded) {
         skipped += 1;
+        processed += 1;
         await supabaseAdmin.from("followup_deliveries").insert({
           step_id: step.id,
           sequence_id: sequence.id,
@@ -127,6 +132,9 @@ export async function runDueFollowups(): Promise<RunSummary> {
         });
         continue;
       }
+
+      const slot = await claimEmailSendSlot(step.user_id);
+      if (!slot.allowed) break;
 
       const pick = variantIndex(index, variants.length, step.rotation, step.rotation_size);
       const variant = variants[pick]!;
@@ -185,9 +193,10 @@ export async function runDueFollowups(): Promise<RunSummary> {
           error: result.error.slice(0, 500),
         });
       }
+      processed += 1;
     }
 
-    const finished = queue.length - batch.length === 0;
+    const finished = queue.length - processed === 0;
     await supabaseAdmin
       .from("followup_steps")
       .update({
