@@ -162,6 +162,13 @@
       "when": 1789694492567,
       "tag": "0022_restrict_sensitive_email_and_team_reads",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1789762163811,
+      "tag": "0023_add_shared_email_warmup_gate",
+      "breakpoints": true
     }
   ]
 }

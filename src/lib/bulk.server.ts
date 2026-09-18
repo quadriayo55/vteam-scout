@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { sendOneEmail } from "./resend.server";
+import { claimEmailSendSlot, WARMUP_DAILY_LIMIT } from "./email-warmup.server";
 import type { RowData } from "./merge";
 
 /**
@@ -83,16 +84,19 @@ export async function runBulkBatch(sendId: string): Promise<BatchOutcome> {
       .eq("status", "sent")
       .gte("sent_at", sinceIso);
 
-    const capLeft = Math.max(send.daily_cap - (sentToday ?? 0), 0);
+    const capLeft = Math.max(Math.min(send.daily_cap, WARMUP_DAILY_LIMIT) - (sentToday ?? 0), 0);
     if (capLeft === 0) {
-      await supabaseAdmin
-        .from("bulk_sends")
-        .update({ status: "paused", updated_at: new Date().toISOString() })
-        .eq("id", send.id);
-      return idle("paused", await pendingCount(send.id), true);
+      return idle("sending", await pendingCount(send.id), true);
     }
 
-    const take = Math.min(send.batch_size, capLeft);
+    const slot = await claimEmailSendSlot(send.user_id);
+    if (!slot.allowed) {
+      return idle("sending", await pendingCount(send.id), slot.reason === "daily_limit");
+    }
+
+    // The warm-up releases exactly one message per minute, regardless of older
+    // batch settings saved on this send.
+    const take = Math.min(1, capLeft);
     const { data: recipients, error: claimError } = await supabaseAdmin.rpc(
       "claim_bulk_recipients",
       { _send_id: send.id, _limit: take },

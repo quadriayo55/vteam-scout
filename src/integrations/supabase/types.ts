@@ -436,6 +436,24 @@ export type Database = {
           },
         ]
       }
+      email_send_pacing: {
+        Row: {
+          next_send_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          next_send_at?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          next_send_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       email_settings: {
         Row: {
           created_at: string
@@ -1051,6 +1069,7 @@ export type Database = {
           variant: number
         }[]
       }
+      claim_email_send_slot: { Args: { _user_id: string }; Returns: Json }
       email_sent_daily: {
         Args: { _days?: number; _user_id?: string }
         Returns: {

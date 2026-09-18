@@ -90,8 +90,8 @@ function FollowupsPage() {
   const [skipReplied, setSkipReplied] = useState(true);
   const [skipClicked, setSkipClicked] = useState(true);
   const [skipOpened, setSkipOpened] = useState(false);
-  const [batchSize, setBatchSize] = useState(20);
-  const [gapSeconds, setGapSeconds] = useState(60);
+  const [batchSize] = useState(1);
+  const [gapSeconds] = useState(60);
   const [steps, setSteps] = useState<StepDraft[]>([emptyStep()]);
   const [openSequence, setOpenSequence] = useState<string | null>(null);
 
@@ -258,8 +258,8 @@ function FollowupsPage() {
           exclude_clicked: skipClicked,
           exclude_opened: skipOpened,
           status: "active",
-          batch_size: Math.max(1, Math.min(batchSize, 100)),
-          gap_seconds: Math.max(0, Math.min(gapSeconds, 3600)),
+          batch_size: 1,
+          gap_seconds: 60,
         })
         .select("id")
         .single();
@@ -458,22 +458,25 @@ function FollowupsPage() {
               <Input
                 type="number"
                 min={1}
-                max={100}
+                max={1}
                 value={batchSize}
-                onChange={(event) => setBatchSize(Number(event.target.value))}
+                readOnly
               />
             </div>
             <div className="space-y-1.5">
               <Label>Seconds between batches</Label>
               <Input
                 type="number"
-                min={0}
+                min={60}
                 max={3600}
                 value={gapSeconds}
-                onChange={(event) => setGapSeconds(Number(event.target.value))}
+                readOnly
               />
             </div>
           </div>
+          <p className="text-xs text-muted-foreground">
+            Safe warm-up sends one email per minute and shares the 50-email daily limit with Bulk Outreach.
+          </p>
         </div>
 
         <div className="space-y-3 rounded-xl border border-border bg-background/40 p-3">

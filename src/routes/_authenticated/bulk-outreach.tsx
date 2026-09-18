@@ -135,9 +135,9 @@ function BulkOutreachPage() {
   const [rotation, setRotation] = useState<Rotation>("alternate");
   const [rotationSize, setRotationSize] = useState(10);
   const [startWith, setStartWith] = useState(0);
-  const [batchSize, setBatchSize] = useState(20);
+  const [batchSize] = useState(1);
   const [gapSeconds, setGapSeconds] = useState(60);
-  const [dailyCap, setDailyCap] = useState(5000);
+  const [dailyCap] = useState(50);
   const [activeId, setActiveId] = useState<string | null>(null);
 
   const [parsing, setParsing] = useState(false);
@@ -384,9 +384,9 @@ function BulkOutreachPage() {
           rotation: rotationOn ? rotation : "alternate",
           rotation_size: Math.max(1, Math.min(rotationSize, 1000)),
           total,
-          batch_size: Math.max(1, Math.min(batchSize, 100)),
-          gap_seconds: Math.max(0, Math.min(gapSeconds, 3600)),
-          daily_cap: Math.max(1, Math.min(dailyCap, 5000)),
+          batch_size: 1,
+          gap_seconds: Math.max(60, Math.min(gapSeconds, 3600)),
+          daily_cap: 50,
           source_files: sourceFiles,
           merge_keys: mergeKeys,
           status: "ready",
@@ -987,14 +987,12 @@ function BulkOutreachPage() {
                   id="batch"
                   type="number"
                   min={1}
-                  max={100}
+                  max={1}
                   value={batchSize}
-                  onChange={(event) => setBatchSize(Number(event.target.value) || 1)}
+                  readOnly
                 />
                 <p className="text-xs text-muted-foreground">
-                  How many emails go out in one go before the app pauses. With {batchSize} per
-                  batch, a list of 1,000 people is sent in small groups of {batchSize} rather than
-                  all at once — this looks natural and protects your sending reputation.
+                  Safe warm-up sends one email at a time to protect your domain reputation.
                 </p>
               </div>
               <div className="space-y-2">
@@ -1002,15 +1000,13 @@ function BulkOutreachPage() {
                 <Input
                   id="gap"
                   type="number"
-                  min={0}
+                  min={60}
                   max={3600}
                   value={gapSeconds}
-                  onChange={(event) => setGapSeconds(Number(event.target.value) || 0)}
+                  onChange={(event) => setGapSeconds(Math.max(60, Number(event.target.value) || 60))}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Waiting time before the next {batchSize} go out — roughly{" "}
-                  {compact(Math.round((batchSize * 3600) / Math.max(gapSeconds, 1)))} emails an
-                  hour.
+                  At least one minute between messages — no more than 60 emails an hour.
                 </p>
               </div>
               <div className="space-y-2">
@@ -1019,12 +1015,12 @@ function BulkOutreachPage() {
                   id="cap"
                   type="number"
                   min={1}
-                  max={5000}
+                  max={50}
                   value={dailyCap}
-                  onChange={(event) => setDailyCap(Math.min(Number(event.target.value) || 1, 5000))}
+                  readOnly
                 />
                 <p className="text-xs text-muted-foreground">
-                  Most you'll send in one day — up to 5,000. Anything left over waits for tomorrow.
+                  Warm-up is limited to 50 total emails a day, including follow-ups.
                 </p>
               </div>
             </div>
@@ -1209,8 +1205,7 @@ function BulkOutreachPage() {
                 )}
               </div>
               <p className="text-xs text-muted-foreground">
-                {active.batch_size} at a time, {active.gap_seconds}s apart, up to {active.daily_cap}{" "}
-                a day.{" "}
+                Safe warm-up: one email per minute, up to 50 total a day including follow-ups.{" "}
                 {running
                   ? "Sending is running on our servers — you can close the app or lock your phone and come back later."
                   : "Sending runs in the background, so this page does not need to stay open."}
