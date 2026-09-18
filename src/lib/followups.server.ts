@@ -98,7 +98,7 @@ export async function runDueFollowups(): Promise<RunSummary> {
     const already = new Set((done ?? []).map((row) => row.recipient_id));
 
     const queue = (recipients ?? []).filter((row) => !already.has(row.id));
-    // The shared warm-up gate permits one outreach message per minute across
+    // The shared pacing gate permits one outreach message at a time across
     // bulk sends and every active follow-up sequence.
     const batch = queue.slice(0, 1);
 
