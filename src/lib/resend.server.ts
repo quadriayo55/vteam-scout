@@ -45,7 +45,10 @@ export async function sendOneEmail(input: SendOneInput): Promise<SendOneResult> 
 
   const subject = inboxSubject(renderTemplate(input.subject, input.context));
   const optOut = unsubscribeUrl(to);
-  const text = `${renderTemplate(input.body, input.context)}\n\nIf you would rather not hear from me, unsubscribe here: ${optOut}`;
+  const message = renderTemplate(input.body, input.context);
+  // Plain text has nowhere to hide a link, so it keeps the address; the HTML
+  // twin shows a single tidy "unsubscribe" word instead.
+  const text = `${message}\n\nIf you would rather not hear from me, unsubscribe here: ${optOut}`;
 
   // A reply address on another provider is fine for deliverability, but the opt-out
   // mailto stays on the signing domain so the authenticated domain always matches.
@@ -66,7 +69,7 @@ export async function sendOneEmail(input: SendOneInput): Promise<SendOneResult> 
         subject,
         text,
         // The HTML twin looks identical but lets the provider report opens/clicks.
-        html: plainHtmlBody(text),
+        html: plainHtmlBody(message, optOut),
         ...(usableReply ? { reply_to: usableReply } : {}),
         headers: {
           "X-Entity-Ref-ID": crypto.randomUUID(),

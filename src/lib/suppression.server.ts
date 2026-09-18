@@ -10,7 +10,17 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
  * inbox, so this is checked immediately before each individual email goes out.
  */
 
-export const APP_URL = "https://vteam-scout.lovable.app";
+/**
+ * Where the links inside emails point.
+ *
+ * Mailbox providers compare the sending domain with the domains linked in the
+ * message, so every link has to sit on the sending brand's own domain rather
+ * than the app's default address. Set EMAIL_LINK_BASE (for example
+ * https://link.verunda.com) once that domain is connected to this app.
+ */
+export const APP_URL = (
+  process.env["EMAIL_LINK_BASE"] || "https://vteam-scout.lovable.app"
+).replace(/\/+$/, "");
 
 function secret(): string {
   return process.env["UNSUBSCRIBE_SECRET"] ?? process.env["RESEND_WEBHOOK_SECRET"] ?? "verunda";
