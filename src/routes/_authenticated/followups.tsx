@@ -238,6 +238,18 @@ function FollowupsPage() {
           throw new Error(`Step ${index + 1} needs a subject and a body on every message.`);
         }
       }
+      const fingerprints = new Set<string>();
+      for (const [index, step] of steps.entries()) {
+        for (const message of step.messages) {
+          const fingerprint = `${message.subject.trim().toLowerCase()}\n${message.body.trim().toLowerCase()}`;
+          if (fingerprints.has(fingerprint)) {
+            throw new Error(
+              `Step ${index + 1} repeats an earlier message exactly. Use different wording before scheduling.`,
+            );
+          }
+          fingerprints.add(fingerprint);
+        }
+      }
       if (unknownTags.length) {
         throw new Error(
           `That list has no column for ${unknownTags.map((tag) => `{${tag}}`).join(", ")}. Fix those tags first.`,

@@ -84,9 +84,18 @@ export const sendTestEmail = createServerFn({ method: "POST" })
       replyTo: (input?.replyTo ?? "").trim() || fromEmail,
     };
   })
-  .handler(async ({ data }): Promise<{ id: string | null }> => {
+  .handler(async ({ data, context }): Promise<{ id: string | null }> => {
     // Use the same delivery path as bulk and follow-up messages so the test
     // exercises the real validation, suppression, unsubscribe and MIME setup.
+    const { claimEmailSendSlot } = await import("./email-warmup.server");
+    const slot = await claimEmailSendSlot(context.userId);
+    if (!slot.allowed) {
+      throw new Error(
+        slot.reason === "daily_limit"
+          ? "Today's shared email limit has been reached."
+          : "Please wait a few seconds before sending another test.",
+      );
+    }
     const { sendOneEmail } = await import("./resend.server");
     const result = await sendOneEmail({
       fromName: data.fromName,
