@@ -165,7 +165,16 @@ export const sendDraftTest = createServerFn({ method: "POST" })
       };
     },
   )
-  .handler(async ({ data }): Promise<{ id: string | null }> => {
+  .handler(async ({ data, context }): Promise<{ id: string | null }> => {
+    const { claimEmailSendSlot } = await import("@/lib/email-warmup.server");
+    const slot = await claimEmailSendSlot(context.userId);
+    if (!slot.allowed) {
+      throw new Error(
+        slot.reason === "daily_limit"
+          ? "Today's shared email limit has been reached."
+          : "Please wait a few seconds before sending another test.",
+      );
+    }
     const { sendOneEmail } = await import("@/lib/resend.server");
     const result = await sendOneEmail({
       fromName: data.fromName,

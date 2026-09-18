@@ -1,3 +1,5 @@
+import { cleanHeaderValue, looksLikeEmail } from "./email-deliverability";
+
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/resend";
 
 /** Sends a readable copy of an inbound reply to the team inbox. */
@@ -6,7 +8,8 @@ export async function forwardReply(reply: { from: string; subject: string; text:
   const resendKey = process.env["RESEND_API_KEY"];
   const to = process.env["REPLY_FORWARD_TO"] ?? "quadri@verunda.com";
   const from = process.env["REPLY_FORWARD_FROM"] ?? "replies@verunda.com";
-  if (!lovableKey || !resendKey) return;
+  if (!lovableKey || !resendKey || !looksLikeEmail(to) || !looksLikeEmail(from)) return;
+  const replyTo = reply.from.trim();
 
   try {
     const response = await fetch(`${GATEWAY_URL}/emails`, {
@@ -19,8 +22,8 @@ export async function forwardReply(reply: { from: string; subject: string; text:
       body: JSON.stringify({
         from: `Verunda replies <${from}>`,
         to: [to],
-        reply_to: reply.from,
-        subject: `Reply from ${reply.from}: ${reply.subject}`.slice(0, 180),
+        ...(looksLikeEmail(replyTo) ? { reply_to: replyTo } : {}),
+        subject: cleanHeaderValue(`Reply from ${reply.from}: ${reply.subject}`).slice(0, 180),
         text: `${reply.from} replied:\n\n${reply.text}`.slice(0, 20000),
       }),
     });

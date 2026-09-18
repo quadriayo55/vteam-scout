@@ -1,5 +1,6 @@
 import { inboxSubject, plainHtmlBody, renderTemplate, type MergeContext } from "./merge";
-import { isSuppressed, unsubscribeUrl } from "./suppression.server";
+import { APP_URL, isSuppressed, unsubscribeUrl } from "./suppression.server";
+import { cleanHeaderValue, looksLikeEmail, validateRenderedEmail } from "./email-deliverability";
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/resend";
 
@@ -17,11 +18,6 @@ export type SendOneInput = {
 export type SendOneResult =
   | { ok: true; id: string | null }
   | { ok: false; error: string; suppressed?: boolean };
-
-/** Cheap sanity check so a malformed address is never handed to the provider. */
-function looksLikeEmail(value: string): boolean {
-  return /^[^\s@,;:<>()"[\]]+@[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z]{2,})+$/i.test(value.trim());
-}
 
 /** Sends one personalised email through the connected Resend account. */
 export async function sendOneEmail(input: SendOneInput): Promise<SendOneResult> {
@@ -46,6 +42,13 @@ export async function sendOneEmail(input: SendOneInput): Promise<SendOneResult> 
   const subject = inboxSubject(renderTemplate(input.subject, input.context));
   const optOut = unsubscribeUrl(to);
   const message = renderTemplate(input.body, input.context);
+  const validationError = validateRenderedEmail({
+    fromEmail: input.fromEmail,
+    subject,
+    body: message,
+    linkBase: APP_URL,
+  });
+  if (validationError) return { ok: false, error: validationError, suppressed: true };
   // Plain text has nowhere to hide a link, so it keeps the address; the HTML
   // twin shows a single tidy "unsubscribe" word instead.
   const text = `${message}\n\nIf you would rather not hear from me, unsubscribe here: ${optOut}`;
@@ -54,6 +57,8 @@ export async function sendOneEmail(input: SendOneInput): Promise<SendOneResult> 
   // mailto stays on the signing domain so the authenticated domain always matches.
   const replyTo = (input.replyTo ?? "").trim();
   const usableReply = replyTo && looksLikeEmail(replyTo) ? replyTo : null;
+  const fromName = cleanHeaderValue(input.fromName, "Verunda");
+  const fromEmail = input.fromEmail.trim().toLowerCase();
 
   try {
     const response = await fetch(`${GATEWAY_URL}/emails`, {
@@ -64,17 +69,16 @@ export async function sendOneEmail(input: SendOneInput): Promise<SendOneResult> 
         "X-Connection-Api-Key": resendKey,
       },
       body: JSON.stringify({
-        from: input.fromName ? `${input.fromName} <${input.fromEmail}>` : input.fromEmail,
+        from: `${fromName} <${fromEmail}>`,
         to: [to],
         subject,
         text,
-        // The HTML twin looks identical but lets the provider report opens/clicks.
+        // Keep a simple HTML twin alongside the plain-text version.
         html: plainHtmlBody(message, optOut),
         ...(usableReply ? { reply_to: usableReply } : {}),
         headers: {
-          "X-Entity-Ref-ID": crypto.randomUUID(),
-          // Spam filters expect bulk mail to offer a machine-readable opt-out.
-          "List-Unsubscribe": `<${optOut}>, <mailto:${input.fromEmail}?subject=unsubscribe>`,
+          // Gmail and Yahoo expect bulk mail to offer a machine-readable opt-out.
+          "List-Unsubscribe": `<${optOut}>`,
           "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
         },
       }),

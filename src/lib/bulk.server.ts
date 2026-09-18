@@ -94,7 +94,7 @@ export async function runBulkBatch(sendId: string): Promise<BatchOutcome> {
       return idle("sending", await pendingCount(send.id), slot.reason === "daily_limit");
     }
 
-    // The warm-up releases exactly one message per minute, regardless of older
+    // The shared pacing gate releases exactly one message at a time, regardless of older
     // batch settings saved on this send.
     const take = Math.min(1, capLeft);
     const { data: recipients, error: claimError } = await supabaseAdmin.rpc(

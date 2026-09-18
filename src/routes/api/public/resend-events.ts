@@ -42,6 +42,47 @@ function firstAddress(value: string[] | string | undefined): string | null {
   return (match?.[1] ?? raw).trim().toLowerCase();
 }
 
+async function pauseRiskyOutreach(
+  supabaseAdmin: Awaited<typeof import("@/integrations/supabase/client.server")>["supabaseAdmin"],
+  sendId: string,
+  eventType: string,
+) {
+  const isComplaint = eventType.endsWith("complained");
+  const [{ count: sent }, { count: bounced }] = await Promise.all([
+    supabaseAdmin
+      .from("bulk_send_recipients")
+      .select("id", { count: "exact", head: true })
+      .eq("send_id", sendId)
+      .eq("status", "sent"),
+    supabaseAdmin
+      .from("bulk_send_recipients")
+      .select("id", { count: "exact", head: true })
+      .eq("send_id", sendId)
+      .not("bounced_at", "is", null),
+  ]);
+  const sentCount = sent ?? 0;
+  const bounceCount = bounced ?? 0;
+  const excessiveBounces = sentCount >= 20 && bounceCount >= 3 && bounceCount / sentCount >= 0.05;
+  if (!isComplaint && !excessiveBounces) return;
+
+  const stoppedAt = new Date().toISOString();
+  await Promise.all([
+    supabaseAdmin
+      .from("bulk_sends")
+      .update({ status: "paused", updated_at: stoppedAt })
+      .eq("id", sendId)
+      .eq("status", "sending"),
+    supabaseAdmin
+      .from("followup_sequences")
+      .update({ status: "paused", updated_at: stoppedAt })
+      .eq("send_id", sendId)
+      .eq("status", "active"),
+  ]);
+  console.warn(
+    `[deliverability] paused outreach ${sendId}: ${isComplaint ? "spam complaint" : `${bounceCount}/${sentCount} bounced`}`,
+  );
+}
+
 export const Route = createFileRoute("/api/public/resend-events")({
   server: {
     handlers: {
@@ -162,6 +203,10 @@ export const Route = createFileRoute("/api/public/resend-events")({
             .from("bulk_send_recipients")
             .update(patch as never)
             .eq("id", recipient.id);
+        }
+
+        if (type.endsWith("bounced") || type.endsWith("complained")) {
+          await pauseRiskyOutreach(supabaseAdmin, recipient.send_id, type);
         }
 
         // A reply is worth seeing straight away, so forward a readable copy.
