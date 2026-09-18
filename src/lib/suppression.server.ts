@@ -14,12 +14,11 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
  * Where the links inside emails point.
  *
  * Mailbox providers compare the sending domain with the domains linked in the
- * message, so every link has to sit on the sending brand's own domain rather
- * than the app's default address. Set EMAIL_LINK_BASE (for example
- * https://link.verunda.com) once that domain is connected to this app.
+ * message, so every link sits on the sending brand's own domain. The default
+ * is the connected link domain; EMAIL_LINK_BASE can override it.
  */
 export const APP_URL = (
-  process.env["EMAIL_LINK_BASE"] || "https://vteam-scout.lovable.app"
+  process.env["EMAIL_LINK_BASE"] || "https://link.verunda.com"
 ).replace(/\/+$/, "");
 
 function secret(): string {
