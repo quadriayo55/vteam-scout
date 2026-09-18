@@ -13,7 +13,7 @@ export const DEFAULT_EMAIL_SETTINGS: EmailSettings = {
   from_local: "quadri",
   from_domain: "verunda.com",
   from_name: "Quadri from Verunda",
-  reply_to: "quadri@verunda.com",
+  reply_to: "verudateam@gmail.com",
 };
 
 /** Turns "Quadri Ayo" into "quadri" so a first name can sit in front of the domain. */

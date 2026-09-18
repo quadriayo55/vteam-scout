@@ -155,7 +155,7 @@ export const sendDraftTest = createServerFn({ method: "POST" })
         to,
         fromEmail,
         fromName: String(input?.fromName ?? "").trim() || "Verunda",
-        replyTo: String(input?.replyTo ?? "").trim() || "quadri@verunda.com",
+        replyTo: String(input?.replyTo ?? "").trim() || null,
         subject: subject.slice(0, 200),
         body: body.slice(0, 2000),
         name: String(input?.name ?? "").trim() || null,

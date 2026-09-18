@@ -133,7 +133,7 @@ export async function runDueFollowups(): Promise<RunSummary> {
       const result = await sendOneEmail({
         fromName: send.from_name,
         fromEmail: send.from_email,
-        replyTo: send.reply_to?.trim() || "quadri@verunda.com",
+        replyTo: send.reply_to?.trim() || send.from_email,
         to: recipient.email,
         subject: variant.subject,
         body: variant.body,
