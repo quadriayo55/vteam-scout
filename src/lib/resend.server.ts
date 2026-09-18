@@ -47,6 +47,11 @@ export async function sendOneEmail(input: SendOneInput): Promise<SendOneResult> 
   const optOut = unsubscribeUrl(to);
   const text = `${renderTemplate(input.body, input.context)}\n\nIf you would rather not hear from me, unsubscribe here: ${optOut}`;
 
+  // A reply address on another provider is fine for deliverability, but the opt-out
+  // mailto stays on the signing domain so the authenticated domain always matches.
+  const replyTo = (input.replyTo ?? "").trim();
+  const usableReply = replyTo && looksLikeEmail(replyTo) ? replyTo : null;
+
   try {
     const response = await fetch(`${GATEWAY_URL}/emails`, {
       method: "POST",
@@ -62,15 +67,16 @@ export async function sendOneEmail(input: SendOneInput): Promise<SendOneResult> 
         text,
         // The HTML twin looks identical but lets the provider report opens/clicks.
         html: plainHtmlBody(text),
-        reply_to: input.replyTo,
+        ...(usableReply ? { reply_to: usableReply } : {}),
         headers: {
           "X-Entity-Ref-ID": crypto.randomUUID(),
           // Spam filters expect bulk mail to offer a machine-readable opt-out.
-          "List-Unsubscribe": `<${optOut}>, <mailto:${input.replyTo}?subject=unsubscribe>`,
+          "List-Unsubscribe": `<${optOut}>, <mailto:${input.fromEmail}?subject=unsubscribe>`,
           "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
         },
       }),
     });
+
 
     const bodyText = await response.text();
     if (!response.ok) {
