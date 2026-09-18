@@ -2,7 +2,6 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/resend";
-const DEFAULT_REPLY_TO = "quadri@verunda.com";
 
 export type ResendDomain = {
   id: string;
@@ -82,7 +81,7 @@ export const sendTestEmail = createServerFn({ method: "POST" })
       to,
       fromEmail,
       fromName: (input?.fromName ?? "").trim() || "Verunda",
-      replyTo: (input?.replyTo ?? "").trim() || DEFAULT_REPLY_TO,
+      replyTo: (input?.replyTo ?? "").trim() || fromEmail,
     };
   })
   .handler(async ({ data }): Promise<{ id: string | null }> => {
