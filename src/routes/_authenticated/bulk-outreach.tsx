@@ -987,12 +987,12 @@ function BulkOutreachPage() {
                   id="batch"
                   type="number"
                   min={1}
-                  max={1}
+                  max={100}
                   value={batchSize}
                   readOnly
                 />
                 <p className="text-xs text-muted-foreground">
-                  Safe warm-up sends one email at a time to protect your domain reputation.
+                  Sends a few emails per batch, spaced out by the gap below.
                 </p>
               </div>
               <div className="space-y-2">
@@ -1000,7 +1000,7 @@ function BulkOutreachPage() {
                 <Input
                   id="gap"
                   type="number"
-                  min={60}
+                  min={15}
                   max={3600}
                   value={gapSeconds}
                   onChange={(event) => setGapSeconds(Math.max(15, Number(event.target.value) || 15))}
