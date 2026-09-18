@@ -88,6 +88,9 @@ function ConnectionsPage() {
       if (!user) throw new Error("Please sign in again.");
       const local = toLocalPart(form.from_local);
       if (!local) throw new Error("Add the name that goes in front of the @.");
+      const replyTo = form.reply_to?.trim() ?? "";
+      if (replyTo && !/^[^\s@,;]+@[^\s@,;]+\.[^\s@,;]{2,}$/.test(replyTo))
+        throw new Error("That reply address does not look like a real email address.");
       const row = {
         user_id: user.id,
         from_local: local,
