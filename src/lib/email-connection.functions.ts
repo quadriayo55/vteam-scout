@@ -85,36 +85,19 @@ export const sendTestEmail = createServerFn({ method: "POST" })
     };
   })
   .handler(async ({ data }): Promise<{ id: string | null }> => {
-    const lovableKey = process.env["LOVABLE_API_KEY"];
-    const resendKey = process.env["RESEND_API_KEY"];
-    if (!lovableKey || !resendKey) throw new Error("No email account is linked yet.");
-
-    const response = await fetch(`${GATEWAY_URL}/emails`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${lovableKey}`,
-        "X-Connection-Api-Key": resendKey,
-      },
-      body: JSON.stringify({
-        from: `${data.fromName} <${data.fromEmail}>`,
-        to: [data.to],
-        subject: "Verunda sender test",
-        text: `This is a test from Verunda Team Scoutier.\n\nSender: ${data.fromEmail}\nReplies go to: ${data.replyTo}`,
-        reply_to: data.replyTo,
-      }),
+    // Use the same delivery path as bulk and follow-up messages so the test
+    // exercises the real validation, suppression, unsubscribe and MIME setup.
+    const { sendOneEmail } = await import("./resend.server");
+    const result = await sendOneEmail({
+      fromName: data.fromName,
+      fromEmail: data.fromEmail,
+      replyTo: data.replyTo,
+      to: data.to,
+      subject: "A quick hello from Verunda",
+      body: "Hi there,\n\nThis is a quick note to confirm that replies and email delivery are working correctly.\n\nBest,\nQuadri",
+      context: { email: data.to },
     });
 
-    const bodyText = await response.text();
-    if (!response.ok) {
-      console.error(`[resend-test] failed [${response.status}]: ${bodyText}`);
-      throw new Error(`Test email failed [${response.status}]: ${bodyText.slice(0, 300)}`);
-    }
-    let id: string | null = null;
-    try {
-      id = (JSON.parse(bodyText) as { id?: string }).id ?? null;
-    } catch {
-      id = null;
-    }
-    return { id };
+    if (!result.ok) throw new Error(result.error);
+    return { id: result.id };
   });
