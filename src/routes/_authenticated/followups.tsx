@@ -90,8 +90,8 @@ function FollowupsPage() {
   const [skipReplied, setSkipReplied] = useState(true);
   const [skipClicked, setSkipClicked] = useState(true);
   const [skipOpened, setSkipOpened] = useState(false);
-  const [batchSize] = useState(1);
-  const [gapSeconds] = useState(60);
+  const [batchSize] = useState(4);
+  const [gapSeconds] = useState(15);
   const [steps, setSteps] = useState<StepDraft[]>([emptyStep()]);
   const [openSequence, setOpenSequence] = useState<string | null>(null);
 
@@ -258,8 +258,8 @@ function FollowupsPage() {
           exclude_clicked: skipClicked,
           exclude_opened: skipOpened,
           status: "active",
-          batch_size: 1,
-          gap_seconds: 60,
+          batch_size: 4,
+          gap_seconds: 15,
         })
         .select("id")
         .single();
@@ -475,7 +475,7 @@ function FollowupsPage() {
             </div>
           </div>
           <p className="text-xs text-muted-foreground">
-            Safe warm-up sends one email per minute and shares the 50-email daily limit with Bulk Outreach.
+            Follow-ups send one email every 15 seconds and share the 5,000-email daily limit with Bulk Outreach.
           </p>
         </div>
 
