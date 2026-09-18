@@ -99,7 +99,7 @@ export async function runBulkBatch(sendId: string): Promise<BatchOutcome> {
     );
     if (claimError) throw new Error(claimError.message);
 
-    const replyTo = send.reply_to?.trim() || "quadri@verunda.com";
+    const replyTo = send.reply_to?.trim() || send.from_email;
 
     const rawVariants = Array.isArray(send.variants) ? send.variants : [];
     const variants = rawVariants
