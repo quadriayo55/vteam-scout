@@ -135,9 +135,9 @@ function BulkOutreachPage() {
   const [rotation, setRotation] = useState<Rotation>("alternate");
   const [rotationSize, setRotationSize] = useState(10);
   const [startWith, setStartWith] = useState(0);
-  const [batchSize] = useState(1);
-  const [gapSeconds, setGapSeconds] = useState(60);
-  const [dailyCap] = useState(50);
+  const [batchSize] = useState(4);
+  const [gapSeconds, setGapSeconds] = useState(15);
+  const [dailyCap] = useState(5000);
   const [activeId, setActiveId] = useState<string | null>(null);
 
   const [parsing, setParsing] = useState(false);
@@ -384,9 +384,9 @@ function BulkOutreachPage() {
           rotation: rotationOn ? rotation : "alternate",
           rotation_size: Math.max(1, Math.min(rotationSize, 1000)),
           total,
-          batch_size: 1,
-          gap_seconds: Math.max(60, Math.min(gapSeconds, 3600)),
-          daily_cap: 50,
+          batch_size: 4,
+          gap_seconds: Math.max(15, Math.min(gapSeconds, 3600)),
+          daily_cap: 5000,
           source_files: sourceFiles,
           merge_keys: mergeKeys,
           status: "ready",
@@ -987,12 +987,12 @@ function BulkOutreachPage() {
                   id="batch"
                   type="number"
                   min={1}
-                  max={1}
+                  max={100}
                   value={batchSize}
                   readOnly
                 />
                 <p className="text-xs text-muted-foreground">
-                  Safe warm-up sends one email at a time to protect your domain reputation.
+                  Sends a few emails per batch, spaced out by the gap below.
                 </p>
               </div>
               <div className="space-y-2">
@@ -1000,13 +1000,13 @@ function BulkOutreachPage() {
                 <Input
                   id="gap"
                   type="number"
-                  min={60}
+                  min={15}
                   max={3600}
                   value={gapSeconds}
-                  onChange={(event) => setGapSeconds(Math.max(60, Number(event.target.value) || 60))}
+                  onChange={(event) => setGapSeconds(Math.max(15, Number(event.target.value) || 15))}
                 />
                 <p className="text-xs text-muted-foreground">
-                  At least one minute between messages — no more than 60 emails an hour.
+                  At least 15 seconds between messages — up to 240 emails an hour.
                 </p>
               </div>
               <div className="space-y-2">
@@ -1015,12 +1015,12 @@ function BulkOutreachPage() {
                   id="cap"
                   type="number"
                   min={1}
-                  max={50}
+                  max={5000}
                   value={dailyCap}
                   readOnly
                 />
                 <p className="text-xs text-muted-foreground">
-                  Warm-up is limited to 50 total emails a day, including follow-ups.
+                  Up to 5,000 emails a day, shared with follow-ups.
                 </p>
               </div>
             </div>
@@ -1205,7 +1205,7 @@ function BulkOutreachPage() {
                 )}
               </div>
               <p className="text-xs text-muted-foreground">
-                Safe warm-up: one email per minute, up to 50 total a day including follow-ups.{" "}
+                Sending pace: one email every 15 seconds, up to 5,000 a day including follow-ups.{" "}
                 {running
                   ? "Sending is running on our servers — you can close the app or lock your phone and come back later."
                   : "Sending runs in the background, so this page does not need to stay open."}

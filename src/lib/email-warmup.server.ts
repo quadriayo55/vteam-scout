@@ -1,7 +1,7 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
-export const WARMUP_DAILY_LIMIT = 50;
-export const WARMUP_GAP_SECONDS = 60;
+export const WARMUP_DAILY_LIMIT = 5000;
+export const WARMUP_GAP_SECONDS = 15;
 
 type SendSlot = {
   allowed: boolean;
