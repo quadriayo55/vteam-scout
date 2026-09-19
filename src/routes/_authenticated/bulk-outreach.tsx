@@ -121,6 +121,7 @@ function BulkOutreachPage() {
   const beginSend = useServerFn(startBulkSend);
   const haltSend = useServerFn(stopBulkSend);
   const runTest = useServerFn(sendDraftTest);
+  const cleanList = useServerFn(checkEmailList);
   const runAssist = useServerFn(writingAssist);
   const emailSettings = useEmailSettings();
   const fileRef = useRef<HTMLInputElement>(null);
