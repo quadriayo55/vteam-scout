@@ -135,7 +135,7 @@ function BulkOutreachPage() {
   const [rotation, setRotation] = useState<Rotation>("alternate");
   const [rotationSize, setRotationSize] = useState(10);
   const [startWith, setStartWith] = useState(0);
-  const [batchSize] = useState(4);
+  const [batchSize, setBatchSize] = useState(4);
   const [gapSeconds, setGapSeconds] = useState(15);
   const [dailyCap] = useState(5000);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -384,7 +384,7 @@ function BulkOutreachPage() {
           rotation: rotationOn ? rotation : "alternate",
           rotation_size: Math.max(1, Math.min(rotationSize, 1000)),
           total,
-          batch_size: 4,
+          batch_size: Math.max(1, Math.min(batchSize, 100)),
           gap_seconds: Math.max(15, Math.min(gapSeconds, 3600)),
           daily_cap: 5000,
           source_files: sourceFiles,
@@ -989,7 +989,9 @@ function BulkOutreachPage() {
                   min={1}
                   max={100}
                   value={batchSize}
-                  readOnly
+                  onChange={(event) =>
+                    setBatchSize(Math.max(1, Math.min(Number(event.target.value) || 1, 100)))
+                  }
                 />
                 <p className="text-xs text-muted-foreground">
                   Sends a few emails per batch, spaced out by the gap below.
