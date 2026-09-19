@@ -1027,7 +1027,9 @@ function BulkOutreachPage() {
                   min={15}
                   max={3600}
                   value={gapSeconds}
-                  onChange={(event) => setGapSeconds(Math.max(15, Number(event.target.value) || 15))}
+                  onChange={(event) =>
+                    setGapSeconds(Math.max(15, Number(event.target.value) || 15))
+                  }
                 />
                 <p className="text-xs text-muted-foreground">
                   At least 15 seconds between messages — up to 240 emails an hour.
@@ -1035,14 +1037,7 @@ function BulkOutreachPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="cap">Daily limit</Label>
-                <Input
-                  id="cap"
-                  type="number"
-                  min={1}
-                  max={5000}
-                  value={dailyCap}
-                  readOnly
-                />
+                <Input id="cap" type="number" min={1} max={5000} value={dailyCap} readOnly />
                 <p className="text-xs text-muted-foreground">
                   Up to 5,000 emails a day, shared with follow-ups.
                 </p>
