@@ -34,3 +34,7 @@
 - Background sending no longer depends on Inngest sync: a database heartbeat (cron "bulk-send-tick", every minute) calls /api/public/hooks/bulk-tick (auth: BULK_TICK_SECRET header) which advances each running send by one batch and runs due follow-ups. Requires the app to be published.
 - Duplicate sends fixed: one runner per send (try_lock_bulk_send/release_bulk_send_lock), contacts claimed before sending (claim_bulk_recipients, 15-min recovery), sent/failed totals recounted from rows.
 - Shared sender protection: Bulk Outreach, Follow-Ups, and tests share a server-enforced 5,000-email daily limit and one-message-per-15-seconds pace.
+
+- Removed Scouting and Lead Lists pages (leads now come straight from Bulk Outreach uploads)
+- Campaigns: tracked links per team can be created/copied/removed on the campaign card; progress now counts real emails sent, inbox deliveries, replies and link opens (campaign_email_totals); pause/continue button
+- Deliverability: every recipient domain is checked for a mail server before the first email; domains that cannot receive mail are skipped and remembered (cuts the ~8% bounce rate that was pushing mail to spam)
