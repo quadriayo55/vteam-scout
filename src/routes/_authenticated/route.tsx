@@ -25,8 +25,6 @@ import {
   Trophy,
   Users,
   Settings,
-  Radar,
-  FileSpreadsheet,
   History,
   CalendarClock,
   MailCheck,
@@ -42,7 +40,6 @@ export const Route = createFileRoute("/_authenticated")({
 
 type NavPermission =
   | "manageCampaigns"
-  | "manageProspects"
   | "seeEveryonesStats"
   | "sendBulkEmail"
   | "manageConnections"
