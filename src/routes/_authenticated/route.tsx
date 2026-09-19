@@ -56,8 +56,6 @@ const NAV: { to: string; label: string; icon: typeof LayoutDashboard; need?: Nav
   { to: "/email-reports", label: "Email Reports", icon: MailCheck, need: "sendBulkEmail" },
   { to: "/connections", label: "Connections", icon: Plug, need: "manageConnections" },
   { to: "/campaigns", label: "Campaigns", icon: Megaphone, need: "manageCampaigns" },
-  { to: "/scouting", label: "Scouting", icon: Radar, need: "manageProspects" },
-  { to: "/lead-files", label: "Lead Lists", icon: FileSpreadsheet, need: "manageMembers" },
   { to: "/analytics", label: "Analytics", icon: BarChart3, need: "seeEveryonesStats" },
   { to: "/activity", label: "Activity Log", icon: History, need: "seeEveryonesStats" },
   { to: "/leaderboard", label: "Leaderboard", icon: Trophy },
