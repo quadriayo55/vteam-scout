@@ -90,8 +90,8 @@ function FollowupsPage() {
   const [skipReplied, setSkipReplied] = useState(true);
   const [skipClicked, setSkipClicked] = useState(true);
   const [skipOpened, setSkipOpened] = useState(false);
-  const [batchSize] = useState(4);
-  const [gapSeconds] = useState(15);
+  const [batchSize, setBatchSize] = useState(4);
+  const [gapSeconds, setGapSeconds] = useState(15);
   const [steps, setSteps] = useState<StepDraft[]>([emptyStep()]);
   const [openSequence, setOpenSequence] = useState<string | null>(null);
 
