@@ -1,6 +1,6 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
-export const WARMUP_DAILY_LIMIT = 5000;
+export const WARMUP_DAILY_LIMIT = 1000;
 export const WARMUP_GAP_SECONDS = 15;
 
 type SendSlot = {
@@ -24,10 +24,7 @@ export async function claimEmailSendSlot(userId: string): Promise<SendSlot> {
   const value = (data ?? {}) as Partial<SendSlot>;
   return {
     allowed: value.allowed === true,
-    reason:
-      value.reason === "daily_limit" || value.reason === "pacing"
-        ? value.reason
-        : "ready",
+    reason: value.reason === "daily_limit" || value.reason === "pacing" ? value.reason : "ready",
     sentToday: Number(value.sentToday ?? 0),
     retryAt: String(value.retryAt ?? new Date().toISOString()),
   };

@@ -13,16 +13,38 @@ export const DEFAULT_EMAIL_SETTINGS: EmailSettings = {
   from_local: "quadri",
   from_domain: "verunda.com",
   from_name: "Quadri from Verunda",
-  reply_to: "verudateam@gmail.com",
+  reply_to: "quadri@verunda.com",
 };
+
+const FREE_MAIL_DOMAINS = new Set([
+  "gmail.com",
+  "googlemail.com",
+  "yahoo.com",
+  "outlook.com",
+  "hotmail.com",
+  "live.com",
+  "icloud.com",
+  "aol.com",
+  "proton.me",
+  "protonmail.com",
+]);
+
+/** A Reply-To on a free provider while sending from a business domain is a classic spoofing/BEC pattern spam filters watch for. */
+export function isReplyToRiskyFreeMail(settings: EmailSettings): boolean {
+  const replyDomain = (settings.reply_to ?? "").trim().toLowerCase().split("@")[1] ?? "";
+  const sendDomain = (settings.from_domain ?? "").trim().toLowerCase();
+  return FREE_MAIL_DOMAINS.has(replyDomain) && replyDomain !== sendDomain;
+}
 
 /** Turns "Quadri Ayo" into "quadri" so a first name can sit in front of the domain. */
 export function toLocalPart(value: string) {
-  return value
-    .toLowerCase()
-    .trim()
-    .split(/\s+/)[0]
-    ?.replace(/[^a-z0-9._-]/g, "") ?? "";
+  return (
+    value
+      .toLowerCase()
+      .trim()
+      .split(/\s+/)[0]
+      ?.replace(/[^a-z0-9._-]/g, "") ?? ""
+  );
 }
 
 export function senderAddress(settings: EmailSettings) {

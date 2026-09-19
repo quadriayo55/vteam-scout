@@ -8,6 +8,7 @@ import { useAuth, useProfile } from "@/lib/auth";
 import { getResendStatus, sendTestEmail } from "@/lib/email-connection.functions";
 import {
   DEFAULT_EMAIL_SETTINGS,
+  isReplyToRiskyFreeMail,
   senderAddress,
   toLocalPart,
   useEmailSettings,
@@ -68,7 +69,10 @@ function ConnectionsPage() {
 
   useEffect(() => {
     if (!touched && !saved.data && profile.data?.display_name) {
-      setForm((current) => ({ ...current, from_local: toLocalPart(profile.data!.display_name ?? "") }));
+      setForm((current) => ({
+        ...current,
+        from_local: toLocalPart(profile.data!.display_name ?? ""),
+      }));
     }
   }, [profile.data, saved.data, touched]);
 
@@ -99,7 +103,9 @@ function ConnectionsPage() {
         reply_to: replyTo || null,
         updated_at: new Date().toISOString(),
       };
-      const { error } = await supabase.from("email_settings").upsert(row, { onConflict: "user_id" });
+      const { error } = await supabase
+        .from("email_settings")
+        .upsert(row, { onConflict: "user_id" });
       if (error) throw error;
     },
     onSuccess: () => {
@@ -265,16 +271,23 @@ function ConnectionsPage() {
                 setTouched(true);
                 setForm({ ...form, reply_to: event.target.value });
               }}
-              placeholder="verudateam@gmail.com"
+              placeholder="quadri@verunda.com"
             />
             <p className="text-xs text-muted-foreground">
-              Any inbox works here — Gmail, Outlook or your own domain. Change it whenever you
-              like: replies land there while the email is still signed by{" "}
-              {form.from_domain || "your domain"}, so spam filters are not affected. Leave it empty
-              and replies come back to {senderAddress(form)}.
+              Any inbox works here — Gmail, Outlook or your own domain. Change it whenever you like:
+              replies land there while the email is still signed by{" "}
+              {form.from_domain || "your domain"}. Leave it empty and replies come back to{" "}
+              {senderAddress(form)}.
             </p>
+            {isReplyToRiskyFreeMail(form) && (
+              <p className="rounded-md border border-amber-500/30 bg-amber-500/10 p-2 text-xs text-amber-600 dark:text-amber-400">
+                A free-provider Reply-To on a business sending domain is a pattern spam filters
+                watch for (it looks like the impersonation/BEC trick where a lookalike address
+                collects replies). Prefer an address on {form.from_domain || "your domain"} —
+                forward it to your Gmail if you want replies there.
+              </p>
+            )}
           </div>
-
 
           <div className="flex flex-wrap gap-2">
             <Button onClick={() => save.mutate()} disabled={save.isPending}>
