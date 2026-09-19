@@ -25,8 +25,6 @@ import {
   Trophy,
   Users,
   Settings,
-  Radar,
-  FileSpreadsheet,
   History,
   CalendarClock,
   MailCheck,
@@ -41,12 +39,7 @@ export const Route = createFileRoute("/_authenticated")({
 });
 
 type NavPermission =
-  | "manageCampaigns"
-  | "manageProspects"
-  | "seeEveryonesStats"
-  | "sendBulkEmail"
-  | "manageConnections"
-  | "manageMembers";
+  "manageCampaigns" | "seeEveryonesStats" | "sendBulkEmail" | "manageConnections" | "manageMembers";
 
 const NAV: { to: string; label: string; icon: typeof LayoutDashboard; need?: NavPermission }[] = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -56,15 +49,12 @@ const NAV: { to: string; label: string; icon: typeof LayoutDashboard; need?: Nav
   { to: "/email-reports", label: "Email Reports", icon: MailCheck, need: "sendBulkEmail" },
   { to: "/connections", label: "Connections", icon: Plug, need: "manageConnections" },
   { to: "/campaigns", label: "Campaigns", icon: Megaphone, need: "manageCampaigns" },
-  { to: "/scouting", label: "Scouting", icon: Radar, need: "manageProspects" },
-  { to: "/lead-files", label: "Lead Lists", icon: FileSpreadsheet, need: "manageMembers" },
   { to: "/analytics", label: "Analytics", icon: BarChart3, need: "seeEveryonesStats" },
   { to: "/activity", label: "Activity Log", icon: History, need: "seeEveryonesStats" },
   { to: "/leaderboard", label: "Leaderboard", icon: Trophy },
   { to: "/team", label: "Members", icon: Users, need: "seeEveryonesStats" },
   { to: "/settings", label: "Settings", icon: Settings },
 ];
-
 
 function AuthenticatedLayout() {
   const navigate = useNavigate();
@@ -88,8 +78,7 @@ function AuthenticatedLayout() {
       .insert({
         id: user.id,
         email: user.email ?? "",
-        display_name:
-          pending.display_name?.trim() || (user.email ?? "").split("@")[0] || "Scout",
+        display_name: pending.display_name?.trim() || (user.email ?? "").split("@")[0] || "Scout",
       })
       .then(() => {
         window.localStorage.removeItem("verunda_pending_profile");
@@ -109,7 +98,6 @@ function AuthenticatedLayout() {
   const name = displayNameOf(profile.data, user.email);
   const roleLabel = permissions.roleLabel;
   const nav = NAV.filter((item) => !item.need || permissions[item.need]);
-
 
   async function signOut() {
     await supabase.auth.signOut();

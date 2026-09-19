@@ -1010,6 +1010,17 @@ export type Database = {
           title: string
         }[]
       }
+      campaign_email_totals: {
+        Args: { _campaign_id: string }
+        Returns: {
+          bounced: number
+          delivered: number
+          emails_sent: number
+          link_opens: number
+          opened: number
+          replied: number
+        }[]
+      }
       campaign_engagement: {
         Args: { _campaign_id: string }
         Returns: {

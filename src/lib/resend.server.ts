@@ -1,5 +1,6 @@
 import { inboxSubject, plainHtmlBody, renderTemplate, type MergeContext } from "./merge";
-import { APP_URL, isSuppressed, unsubscribeUrl } from "./suppression.server";
+import { APP_URL, isSuppressed, suppress, unsubscribeUrl } from "./suppression.server";
+import { domainAcceptsMail } from "./mx.server";
 import { cleanHeaderValue, looksLikeEmail, validateRenderedEmail } from "./email-deliverability";
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/resend";
@@ -16,8 +17,7 @@ export type SendOneInput = {
 };
 
 export type SendOneResult =
-  | { ok: true; id: string | null }
-  | { ok: false; error: string; suppressed?: boolean };
+  { ok: true; id: string | null } | { ok: false; error: string; suppressed?: boolean };
 
 /** Sends one personalised email through the connected Resend account. */
 export async function sendOneEmail(input: SendOneInput): Promise<SendOneResult> {
@@ -35,6 +35,16 @@ export async function sendOneEmail(input: SendOneInput): Promise<SendOneResult> 
     return {
       ok: false,
       error: "Skipped: this address unsubscribed, bounced or reported a message before.",
+      suppressed: true,
+    };
+  }
+  // A domain with no mail server always bounces, and bounces are what pushes the
+  // rest of the list into spam, so it is skipped and remembered instead.
+  if (!(await domainAcceptsMail(to))) {
+    await suppress(to, "undeliverable_domain");
+    return {
+      ok: false,
+      error: "Skipped: that domain cannot receive email.",
       suppressed: true,
     };
   }
@@ -83,7 +93,6 @@ export async function sendOneEmail(input: SendOneInput): Promise<SendOneResult> 
         },
       }),
     });
-
 
     const bodyText = await response.text();
     if (!response.ok) {
