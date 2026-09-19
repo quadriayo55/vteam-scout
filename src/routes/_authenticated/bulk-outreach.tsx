@@ -317,11 +317,31 @@ function BulkOutreachPage() {
         brand: brandIndex >= 0 ? (row[brandIndex] ?? "").trim() || null : null,
         row: buildRowData(parsed.headers, row),
       }));
-      setFileRecipients((currentRows) => [...currentRows, ...rows]);
+      // Clean the list straight away: bad addresses, addresses that bounced or
+      // unsubscribed before, and dead domains are removed before anything is sent.
+      let keep = rows;
+      let removed = 0;
+      try {
+        const check = await cleanList({ data: { emails: rows.map((row) => row.email) } });
+        const drop = new Set(check.bad.map((item) => item.email));
+        if (drop.size) {
+          keep = rows.filter((row) => !drop.has(row.email.trim().toLowerCase()));
+          removed = rows.length - keep.length;
+        }
+      } catch {
+        toast.message("The list could not be checked for bad addresses right now.");
+      }
+      if (!keep.length) {
+        toast.error(`Every address in ${file.name} was unusable, so nothing was added.`);
+        return;
+      }
+      setFileRecipients((currentRows) => [...currentRows, ...keep]);
       setSourceFiles((list) => (list.includes(file.name) ? list : [...list, file.name]));
       setFileColumns((list) => [...new Set([...list, ...parsed.headers.filter(Boolean)])]);
       toast.success(
-        `${rows.length.toLocaleString()} rows read from ${file.name} — every column is usable as a {tag}`,
+        removed
+          ? `${keep.length.toLocaleString()} good contacts added from ${file.name} — ${removed.toLocaleString()} removed (bounced, unsubscribed, invalid or dead domain)`
+          : `${keep.length.toLocaleString()} rows read from ${file.name} — every column is usable as a {tag}`,
       );
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "That file could not be read.");
