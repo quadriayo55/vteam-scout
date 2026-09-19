@@ -22,7 +22,17 @@ export const CHANNEL_LABELS: Record<Channel, string> = {
 
 const HEADER_HINTS: Record<Channel, string[]> = {
   email: ["email", "e-mail", "mail", "emailaddress", "contactemail"],
-  whatsapp: ["whatsapp", "whatsap", "wa", "phone", "mobile", "number", "tel", "telephone", "contact"],
+  whatsapp: [
+    "whatsapp",
+    "whatsap",
+    "wa",
+    "phone",
+    "mobile",
+    "number",
+    "tel",
+    "telephone",
+    "contact",
+  ],
   facebook: ["facebook", "fb", "fbpage", "facebookurl"],
   instagram: ["instagram", "ig", "insta", "instagramurl"],
   tiktok: ["tiktok", "tik tok", "tt", "tiktokurl"],
@@ -30,7 +40,16 @@ const HEADER_HINTS: Record<Channel, string[]> = {
   domain: ["domain", "website", "websiteurl", "storeurl", "storelink", "shopurl", "weburl", "site"],
 };
 
-const NAME_HINTS = ["name", "firstname", "first name", "fullname", "full name", "contact name", "store", "storename"];
+const NAME_HINTS = [
+  "name",
+  "firstname",
+  "first name",
+  "fullname",
+  "full name",
+  "contact name",
+  "store",
+  "storename",
+];
 
 const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
 
@@ -39,7 +58,10 @@ export function detectColumns(headers: string[]) {
   headers.forEach((header, index) => {
     const h = norm(header);
     if (!h) return;
-    if (map.name === undefined && NAME_HINTS.some((hint) => h === norm(hint) || h.includes(norm(hint)))) {
+    if (
+      map.name === undefined &&
+      NAME_HINTS.some((hint) => h === norm(hint) || h.includes(norm(hint)))
+    ) {
       map.name = index;
     }
     for (const channel of CHANNELS) {
@@ -55,7 +77,9 @@ export function detectColumns(headers: string[]) {
 /** Basic international phone validation: 8-15 digits with a plausible country code. */
 export function normalizePhone(raw: string): string | null {
   if (!raw) return null;
-  let value = String(raw).trim().replace(/[\s()\-.]/g, "");
+  let value = String(raw)
+    .trim()
+    .replace(/[\s()\-.]/g, "");
   if (value.startsWith("00")) value = `+${value.slice(2)}`;
   const plus = value.startsWith("+");
   const digits = value.replace(/\D/g, "");
@@ -166,6 +190,18 @@ const SPAM_WORDS = [
   "cheap",
   "make money",
   "double your",
+  // Manufactured scarcity/urgency reads as templated even without a classic
+  // spam word, and is itself a pattern spam classifiers weight heavily.
+  "limited spots",
+  "spots left",
+  "don't miss out",
+  "do not miss out",
+  "exclusive offer",
+  "before it's gone",
+  "before it's too late",
+  "last chance",
+  "first look",
+  "hurry",
 ];
 
 export function spamCheck(text: string) {
@@ -178,6 +214,7 @@ export function spamCheck(text: string) {
     hits,
     shouty,
     exclaim,
-    level: score === 0 ? ("clean" as const) : score <= 2 ? ("caution" as const) : ("risky" as const),
+    level:
+      score === 0 ? ("clean" as const) : score <= 2 ? ("caution" as const) : ("risky" as const),
   };
 }
