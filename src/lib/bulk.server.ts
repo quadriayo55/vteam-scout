@@ -89,14 +89,9 @@ export async function runBulkBatch(sendId: string): Promise<BatchOutcome> {
       return idle("sending", await pendingCount(send.id), true);
     }
 
-    const slot = await claimEmailSendSlot(send.user_id);
-    if (!slot.allowed) {
-      return idle("sending", await pendingCount(send.id), slot.reason === "daily_limit");
-    }
-
-    // The shared pacing gate releases exactly one message at a time, regardless of older
-    // batch settings saved on this send.
-    const take = Math.min(1, capLeft);
+    // Honour the batch size saved on the send; the shared pacing gate still spaces
+    // each individual message inside the batch.
+    const take = Math.max(1, Math.min(send.batch_size || 1, 100, capLeft));
     const { data: recipients, error: claimError } = await supabaseAdmin.rpc(
       "claim_bulk_recipients",
       { _send_id: send.id, _limit: take },
@@ -118,9 +113,35 @@ export async function runBulkBatch(sendId: string): Promise<BatchOutcome> {
 
     let sent = 0;
     let failed = 0;
+    let capReached = false;
     const errors: string[] = [];
+    const queue = recipients ?? [];
+    const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-    for (const recipient of recipients ?? []) {
+    for (const [index, recipient] of queue.entries()) {
+      // Wait for this message's turn at the shared pacing gate.
+      let slot = await claimEmailSendSlot(send.user_id);
+      if (!slot.allowed && slot.reason === "pacing") {
+        const waitMs = Math.max(
+          0,
+          Math.min(new Date(slot.retryAt).getTime() - Date.now() + 250, 20000),
+        );
+        await sleep(waitMs);
+        slot = await claimEmailSendSlot(send.user_id);
+      }
+      if (!slot.allowed) {
+        capReached = slot.reason === "daily_limit";
+        // Hand the rest of the batch back so a later run picks it up.
+        const leftover = queue.slice(index).map((row) => row.id);
+        if (leftover.length > 0) {
+          await supabaseAdmin
+            .from("bulk_send_recipients")
+            .update({ status: "pending", claimed_at: null })
+            .in("id", leftover);
+        }
+        break;
+      }
+
       const variant = variants[recipient.variant ?? 0];
       const result = await sendOneEmail({
         fromName: send.from_name,
@@ -151,6 +172,7 @@ export async function runBulkBatch(sendId: string): Promise<BatchOutcome> {
           .eq("id", recipient.id);
       } else if (result.suppressed) {
         // Unsubscribed, previously bounced or malformed: set aside, not a failure.
+        if (errors.length < 3) errors.push(result.error);
         await supabaseAdmin
           .from("bulk_send_recipients")
           .update({ status: "skipped", error: result.error.slice(0, 500) })
