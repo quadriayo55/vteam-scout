@@ -176,6 +176,13 @@
       "when": 1789762349090,
       "tag": "0024_raise_email_daily_limit",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1789823309336,
+      "tag": "0025_campaign_email_totals",
+      "breakpoints": true
     }
   ]
 }
