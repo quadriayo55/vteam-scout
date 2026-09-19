@@ -270,8 +270,8 @@ function FollowupsPage() {
           exclude_clicked: skipClicked,
           exclude_opened: skipOpened,
           status: "active",
-          batch_size: 4,
-          gap_seconds: 15,
+          batch_size: Math.max(1, Math.min(batchSize || 4, 100)),
+          gap_seconds: Math.max(15, Math.min(gapSeconds || 15, 3600)),
         })
         .select("id")
         .single();
