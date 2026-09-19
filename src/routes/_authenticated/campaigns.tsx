@@ -230,7 +230,6 @@ function NewCampaignForm({ userId, onDone }: { userId: string | null; onDone: ()
   );
 }
 
-
 type CampaignEmailTotals = {
   emails_sent: number;
   delivered: number;

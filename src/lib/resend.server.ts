@@ -17,8 +17,7 @@ export type SendOneInput = {
 };
 
 export type SendOneResult =
-  | { ok: true; id: string | null }
-  | { ok: false; error: string; suppressed?: boolean };
+  { ok: true; id: string | null } | { ok: false; error: string; suppressed?: boolean };
 
 /** Sends one personalised email through the connected Resend account. */
 export async function sendOneEmail(input: SendOneInput): Promise<SendOneResult> {
@@ -94,7 +93,6 @@ export async function sendOneEmail(input: SendOneInput): Promise<SendOneResult> 
         },
       }),
     });
-
 
     const bodyText = await response.text();
     if (!response.ok) {
