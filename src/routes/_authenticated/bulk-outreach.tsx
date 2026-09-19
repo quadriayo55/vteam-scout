@@ -10,6 +10,7 @@ import { writingAssist, type AssistMode } from "@/lib/ai.functions";
 import { isValidEmail, spamCheck, compact } from "@/lib/outreach";
 import { extractContacts, gradeList } from "@/lib/extract";
 import { parseFile } from "@/lib/parse";
+import { checkEmailList } from "@/lib/listcheck.functions";
 import { buildRowData, missingTags, normalizeKey, renderTemplate, type RowData } from "@/lib/merge";
 import {
   useTemplates,
@@ -120,6 +121,7 @@ function BulkOutreachPage() {
   const beginSend = useServerFn(startBulkSend);
   const haltSend = useServerFn(stopBulkSend);
   const runTest = useServerFn(sendDraftTest);
+  const cleanList = useServerFn(checkEmailList);
   const runAssist = useServerFn(writingAssist);
   const emailSettings = useEmailSettings();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -315,11 +317,31 @@ function BulkOutreachPage() {
         brand: brandIndex >= 0 ? (row[brandIndex] ?? "").trim() || null : null,
         row: buildRowData(parsed.headers, row),
       }));
-      setFileRecipients((currentRows) => [...currentRows, ...rows]);
+      // Clean the list straight away: bad addresses, addresses that bounced or
+      // unsubscribed before, and dead domains are removed before anything is sent.
+      let keep = rows;
+      let removed = 0;
+      try {
+        const check = await cleanList({ data: { emails: rows.map((row) => row.email) } });
+        const drop = new Set(check.bad.map((item) => item.email));
+        if (drop.size) {
+          keep = rows.filter((row) => !drop.has(row.email.trim().toLowerCase()));
+          removed = rows.length - keep.length;
+        }
+      } catch {
+        toast.message("The list could not be checked for bad addresses right now.");
+      }
+      if (!keep.length) {
+        toast.error(`Every address in ${file.name} was unusable, so nothing was added.`);
+        return;
+      }
+      setFileRecipients((currentRows) => [...currentRows, ...keep]);
       setSourceFiles((list) => (list.includes(file.name) ? list : [...list, file.name]));
       setFileColumns((list) => [...new Set([...list, ...parsed.headers.filter(Boolean)])]);
       toast.success(
-        `${rows.length.toLocaleString()} rows read from ${file.name} — every column is usable as a {tag}`,
+        removed
+          ? `${keep.length.toLocaleString()} good contacts added from ${file.name} — ${removed.toLocaleString()} removed (bounced, unsubscribed, invalid or dead domain)`
+          : `${keep.length.toLocaleString()} rows read from ${file.name} — every column is usable as a {tag}`,
       );
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "That file could not be read.");
@@ -1005,7 +1027,9 @@ function BulkOutreachPage() {
                   min={15}
                   max={3600}
                   value={gapSeconds}
-                  onChange={(event) => setGapSeconds(Math.max(15, Number(event.target.value) || 15))}
+                  onChange={(event) =>
+                    setGapSeconds(Math.max(15, Number(event.target.value) || 15))
+                  }
                 />
                 <p className="text-xs text-muted-foreground">
                   At least 15 seconds between messages — up to 240 emails an hour.
@@ -1013,14 +1037,7 @@ function BulkOutreachPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="cap">Daily limit</Label>
-                <Input
-                  id="cap"
-                  type="number"
-                  min={1}
-                  max={5000}
-                  value={dailyCap}
-                  readOnly
-                />
+                <Input id="cap" type="number" min={1} max={5000} value={dailyCap} readOnly />
                 <p className="text-xs text-muted-foreground">
                   Up to 5,000 emails a day, shared with follow-ups.
                 </p>
