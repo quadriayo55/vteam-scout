@@ -90,8 +90,8 @@ function FollowupsPage() {
   const [skipReplied, setSkipReplied] = useState(true);
   const [skipClicked, setSkipClicked] = useState(true);
   const [skipOpened, setSkipOpened] = useState(false);
-  const [batchSize] = useState(4);
-  const [gapSeconds] = useState(15);
+  const [batchSize, setBatchSize] = useState(4);
+  const [gapSeconds, setGapSeconds] = useState(15);
   const [steps, setSteps] = useState<StepDraft[]>([emptyStep()]);
   const [openSequence, setOpenSequence] = useState<string | null>(null);
 
@@ -270,8 +270,8 @@ function FollowupsPage() {
           exclude_clicked: skipClicked,
           exclude_opened: skipOpened,
           status: "active",
-          batch_size: 4,
-          gap_seconds: 15,
+          batch_size: Math.max(1, Math.min(batchSize || 4, 100)),
+          gap_seconds: Math.max(15, Math.min(gapSeconds || 15, 3600)),
         })
         .select("id")
         .single();
@@ -472,7 +472,7 @@ function FollowupsPage() {
                 min={1}
                 max={100}
                 value={batchSize}
-                readOnly
+                onChange={(event) => setBatchSize(Number(event.target.value))}
               />
             </div>
             <div className="space-y-1.5">
@@ -482,12 +482,13 @@ function FollowupsPage() {
                 min={15}
                 max={3600}
                 value={gapSeconds}
-                readOnly
+                onChange={(event) => setGapSeconds(Number(event.target.value))}
               />
             </div>
           </div>
           <p className="text-xs text-muted-foreground">
-            Follow-ups send one email every 15 seconds and share the 5,000-email daily limit with Bulk Outreach.
+            Follow-ups share the 5,000-email daily limit with Bulk Outreach. The gap can’t go below
+            15 seconds — that keeps the shared sending pace safe.
           </p>
         </div>
 
