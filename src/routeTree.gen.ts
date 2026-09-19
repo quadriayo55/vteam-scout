@@ -22,10 +22,8 @@ import { Route as AuthenticatedConnectionsRouteImport } from './routes/_authenti
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedEmailReportsRouteImport } from './routes/_authenticated/email-reports'
 import { Route as AuthenticatedFollowupsRouteImport } from './routes/_authenticated/followups'
-import { Route as AuthenticatedLeadFilesRouteImport } from './routes/_authenticated/lead-files'
 import { Route as AuthenticatedLeaderboardRouteImport } from './routes/_authenticated/leaderboard'
 import { Route as AuthenticatedOutreachRouteImport } from './routes/_authenticated/outreach'
-import { Route as AuthenticatedScoutingRouteImport } from './routes/_authenticated/scouting'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedTeamRouteImport } from './routes/_authenticated/team'
 import { Route as JCodeRouteImport } from './routes/j.$code'
@@ -101,11 +99,6 @@ const AuthenticatedFollowupsRoute = AuthenticatedFollowupsRouteImport.update({
   path: '/followups',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedLeadFilesRoute = AuthenticatedLeadFilesRouteImport.update({
-  id: '/lead-files',
-  path: '/lead-files',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const AuthenticatedLeaderboardRoute =
   AuthenticatedLeaderboardRouteImport.update({
     id: '/leaderboard',
@@ -115,11 +108,6 @@ const AuthenticatedLeaderboardRoute =
 const AuthenticatedOutreachRoute = AuthenticatedOutreachRouteImport.update({
   id: '/outreach',
   path: '/outreach',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedScoutingRoute = AuthenticatedScoutingRouteImport.update({
-  id: '/scouting',
-  path: '/scouting',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
@@ -171,10 +159,8 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/email-reports': typeof AuthenticatedEmailReportsRoute
   '/followups': typeof AuthenticatedFollowupsRoute
-  '/lead-files': typeof AuthenticatedLeadFilesRoute
   '/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/outreach': typeof AuthenticatedOutreachRoute
-  '/scouting': typeof AuthenticatedScoutingRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/team': typeof AuthenticatedTeamRoute
   '/j/$code': typeof JCodeRoute
@@ -196,10 +182,8 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/email-reports': typeof AuthenticatedEmailReportsRoute
   '/followups': typeof AuthenticatedFollowupsRoute
-  '/lead-files': typeof AuthenticatedLeadFilesRoute
   '/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/outreach': typeof AuthenticatedOutreachRoute
-  '/scouting': typeof AuthenticatedScoutingRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/team': typeof AuthenticatedTeamRoute
   '/j/$code': typeof JCodeRoute
@@ -223,10 +207,8 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/email-reports': typeof AuthenticatedEmailReportsRoute
   '/_authenticated/followups': typeof AuthenticatedFollowupsRoute
-  '/_authenticated/lead-files': typeof AuthenticatedLeadFilesRoute
   '/_authenticated/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/_authenticated/outreach': typeof AuthenticatedOutreachRoute
-  '/_authenticated/scouting': typeof AuthenticatedScoutingRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/team': typeof AuthenticatedTeamRoute
   '/j/$code': typeof JCodeRoute
@@ -250,10 +232,8 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/email-reports'
     | '/followups'
-    | '/lead-files'
     | '/leaderboard'
     | '/outreach'
-    | '/scouting'
     | '/settings'
     | '/team'
     | '/j/$code'
@@ -275,10 +255,8 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/email-reports'
     | '/followups'
-    | '/lead-files'
     | '/leaderboard'
     | '/outreach'
-    | '/scouting'
     | '/settings'
     | '/team'
     | '/j/$code'
@@ -301,10 +279,8 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/email-reports'
     | '/_authenticated/followups'
-    | '/_authenticated/lead-files'
     | '/_authenticated/leaderboard'
     | '/_authenticated/outreach'
-    | '/_authenticated/scouting'
     | '/_authenticated/settings'
     | '/_authenticated/team'
     | '/j/$code'
@@ -420,13 +396,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFollowupsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/lead-files': {
-      id: '/_authenticated/lead-files'
-      path: '/lead-files'
-      fullPath: '/lead-files'
-      preLoaderRoute: typeof AuthenticatedLeadFilesRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/leaderboard': {
       id: '/_authenticated/leaderboard'
       path: '/leaderboard'
@@ -439,13 +408,6 @@ declare module '@tanstack/react-router' {
       path: '/outreach'
       fullPath: '/outreach'
       preLoaderRoute: typeof AuthenticatedOutreachRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/scouting': {
-      id: '/_authenticated/scouting'
-      path: '/scouting'
-      fullPath: '/scouting'
-      preLoaderRoute: typeof AuthenticatedScoutingRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/settings': {
@@ -509,10 +471,8 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedEmailReportsRoute: typeof AuthenticatedEmailReportsRoute
   AuthenticatedFollowupsRoute: typeof AuthenticatedFollowupsRoute
-  AuthenticatedLeadFilesRoute: typeof AuthenticatedLeadFilesRoute
   AuthenticatedLeaderboardRoute: typeof AuthenticatedLeaderboardRoute
   AuthenticatedOutreachRoute: typeof AuthenticatedOutreachRoute
-  AuthenticatedScoutingRoute: typeof AuthenticatedScoutingRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedTeamRoute: typeof AuthenticatedTeamRoute
 }
@@ -526,10 +486,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedEmailReportsRoute: AuthenticatedEmailReportsRoute,
   AuthenticatedFollowupsRoute: AuthenticatedFollowupsRoute,
-  AuthenticatedLeadFilesRoute: AuthenticatedLeadFilesRoute,
   AuthenticatedLeaderboardRoute: AuthenticatedLeaderboardRoute,
   AuthenticatedOutreachRoute: AuthenticatedOutreachRoute,
-  AuthenticatedScoutingRoute: AuthenticatedScoutingRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedTeamRoute: AuthenticatedTeamRoute,
 }
