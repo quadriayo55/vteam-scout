@@ -270,7 +270,9 @@ function BulkOutreachPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("bulk_send_recipients")
-        .select("id,email,contact_name,status,error,sent_at")
+        .select(
+          "id,email,contact_name,status,error,sent_at,delivered_at,bounced_at,complained_at,open_count",
+        )
         .eq("send_id", activeId ?? "")
         .order("created_at", { ascending: true })
         .limit(300);
@@ -278,6 +280,58 @@ function BulkOutreachPage() {
       return data ?? [];
     },
   });
+
+  // "Sent" only means Resend accepted the message — this is the actual inbox
+  // outcome, reported back later by the Resend webhook, so it's counted
+  // separately across the whole send rather than just the 300 rows shown above.
+  const deliveryStats = useQuery({
+    queryKey: ["bulk-delivery-stats", activeId],
+    enabled: Boolean(activeId),
+    refetchInterval: running ? 5000 : 30000,
+    queryFn: async () => {
+      const sendId = activeId ?? "";
+      const countWhere = (column: "delivered_at" | "bounced_at" | "complained_at") =>
+        supabase
+          .from("bulk_send_recipients")
+          .select("id", { count: "exact", head: true })
+          .eq("send_id", sendId)
+          .not(column, "is", null);
+      const [delivered, bounced, complained] = await Promise.all([
+        countWhere("delivered_at"),
+        countWhere("bounced_at"),
+        countWhere("complained_at"),
+      ]);
+      return {
+        delivered: delivered.count ?? 0,
+        bounced: bounced.count ?? 0,
+        complained: complained.count ?? 0,
+      };
+    },
+  });
+
+  function recipientOutcome(row: {
+    status: string;
+    sent_at: string | null;
+    delivered_at: string | null;
+    bounced_at: string | null;
+    complained_at: string | null;
+    open_count: number | null;
+  }): { label: string; className: string } {
+    if (row.complained_at) return { label: "Reported as spam", className: "text-destructive" };
+    if (row.bounced_at) return { label: "Bounced", className: "text-destructive" };
+    if (row.delivered_at) {
+      const opened = (row.open_count ?? 0) > 0;
+      return {
+        label: `${opened ? "Opened" : "Delivered"} · ${formatIn(tz, row.delivered_at)}`,
+        className: "text-emerald-400",
+      };
+    }
+    if (row.status === "sent" && row.sent_at) {
+      return { label: `Sent · ${formatIn(tz, row.sent_at)}`, className: "text-sky-400" };
+    }
+    if (row.status === "failed") return { label: "Failed", className: "text-destructive" };
+    return { label: row.status, className: "text-muted-foreground" };
+  }
 
   function updateMessage(patch: Partial<Message>) {
     setMessages((list) =>
@@ -411,7 +465,7 @@ function BulkOutreachPage() {
           total,
           batch_size: Math.max(1, Math.min(batchSize, 100)),
           gap_seconds: Math.max(15, Math.min(gapSeconds, 3600)),
-          daily_cap: 5000,
+          daily_cap: dailyCap,
           source_files: sourceFiles,
           merge_keys: mergeKeys,
           status: "ready",
@@ -1175,11 +1229,32 @@ function BulkOutreachPage() {
             <div className="grid grid-cols-2 gap-2">
               <StatCard label="Sent" value={active ? active.sent : totalSent} />
               <StatCard
+                label="Delivered"
+                value={active ? (deliveryStats.data?.delivered ?? 0) : 0}
+              />
+              <StatCard
                 label="Remaining"
                 value={active ? Math.max(active.total - active.sent - active.failed, 0) : 0}
               />
+              <StatCard label="Total generated" value={active ? active.total : totalGenerated} />
             </div>
-            <StatCard label="Total generated" value={active ? active.total : totalGenerated} />
+            {active && active.sent > 0 && (
+              <p className="text-xs text-muted-foreground">
+                {deliveryStats.data
+                  ? `${Math.round(((deliveryStats.data.delivered) / active.sent) * 100)}% of sent mail confirmed delivered so far`
+                  : "Checking delivery confirmations…"}
+                {!deliveryStats.isPending &&
+                  deliveryStats.data &&
+                  deliveryStats.data.delivered === 0 &&
+                  active.sent >= 5 && (
+                    <>
+                      {" "}
+                      — if this stays at 0%, the Resend delivery webhook likely isn't registered yet
+                      (see Connections).
+                    </>
+                  )}
+              </p>
+            )}
             <div className="flex items-center justify-center pt-1">
               <ProgressRing
                 percent={
@@ -1200,11 +1275,18 @@ function BulkOutreachPage() {
               <Progress value={active.total ? (active.sent / active.total) * 100 : 0} />
               <div className="grid grid-cols-3 gap-2">
                 <StatCard label="Sent" value={active.sent} />
+                <StatCard label="Delivered" value={deliveryStats.data?.delivered ?? 0} />
                 <StatCard
                   label="Left"
                   value={Math.max(active.total - active.sent - active.failed, 0)}
                 />
                 <StatCard label="Failed" value={active.failed} tone="muted" />
+                <StatCard label="Bounced" value={deliveryStats.data?.bounced ?? 0} tone="muted" />
+                <StatCard
+                  label="Reported spam"
+                  value={deliveryStats.data?.complained ?? 0}
+                  tone="muted"
+                />
               </div>
               <div className="flex flex-wrap gap-2">
                 {running ? (
@@ -1228,33 +1310,27 @@ function BulkOutreachPage() {
                 )}
               </div>
               <p className="text-xs text-muted-foreground">
-                Sending pace: one email every 15 seconds, up to 5,000 a day including follow-ups.{" "}
+                Pace and daily volume ramp up automatically as the sending domain builds a clean
+                history — see the Daily limit panel below for today's actual numbers.{" "}
                 {running
                   ? "Sending is running on our servers — you can close the app or lock your phone and come back later."
                   : "Sending runs in the background, so this page does not need to stay open."}
               </p>
               <ul className="max-h-64 space-y-1.5 overflow-y-auto">
-                {(recipients.data ?? []).map((row) => (
-                  <li
-                    key={row.id}
-                    className="flex items-center justify-between gap-2 rounded-lg border border-border px-2.5 py-1.5 text-xs"
-                  >
-                    <span className="truncate">{row.email}</span>
-                    <span
-                      className={
-                        row.status === "sent"
-                          ? "shrink-0 text-emerald-400"
-                          : row.status === "failed"
-                            ? "shrink-0 text-destructive"
-                            : "shrink-0 text-muted-foreground"
-                      }
+                {(recipients.data ?? []).map((row) => {
+                  const outcome = recipientOutcome(row);
+                  return (
+                    <li
+                      key={row.id}
+                      className="flex items-center justify-between gap-2 rounded-lg border border-border px-2.5 py-1.5 text-xs"
                     >
-                      {row.status === "sent" && row.sent_at
-                        ? formatIn(tz, row.sent_at)
-                        : row.status}
-                    </span>
-                  </li>
-                ))}
+                      <span className="truncate">{row.email}</span>
+                      <span className={`shrink-0 font-medium ${outcome.className}`}>
+                        {outcome.label}
+                      </span>
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           ) : (
