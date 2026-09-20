@@ -11,51 +11,62 @@ export type TemplateRow = {
 
 export const TEMPLATE_CATEGORIES = ["Sales", "Marketing", "Business", "Follow-up"] as const;
 
-/** Starter templates every account gets until they save their own. */
+/**
+ * Starter templates every account gets until they save their own.
+ *
+ * Kept deliberately free of classic cold-email tropes ("came across your
+ * store", "impressed by what you're building") and manufactured urgency
+ * ("limited spots", "before we share it more widely") — both read as
+ * templated to spam classifiers even after {name} is filled in, and
+ * manufactured scarcity is itself a pattern filters weight heavily.
+ * {brand}/{domain} are deliberately not used mid-sentence here: the merge
+ * cleanup in merge.ts only tidies a dropped tag sitting right before
+ * punctuation, so a missing value elsewhere leaves a broken sentence.
+ */
 export const STARTER_TEMPLATES: Omit<TemplateRow, "id">[] = [
   {
     name: "Cold Outreach",
     category: "Sales",
-    subject: "Quick question",
-    body: "Hi {name},\n\nI came across your store and was really impressed by what you're building.\n\nWe help brands like yours reach more of the right customers without extra ad spend. Would you be open to a short look at how it works?\n\nEither way, keep up the great work.",
+    subject: "A quick note",
+    body: "Hi {name},\n\nI took a proper look at what you're building before writing this — I like the direction it's headed in.\n\nI help stores at a similar stage turn more of their existing traffic into customers, without raising ad spend. Worth a short look, or is the timing off right now?\n\nEither way, good luck with it.",
   },
   {
     name: "Follow-up",
     category: "Follow-up",
-    subject: "Following up",
-    body: "Hello {name},\n\nI hope this email finds you well. I wanted to follow up on my previous note in case it slipped past your inbox.\n\nHappy to send over a two-minute summary if that's easier than a call.\n\nThank you for your time.",
+    subject: "Circling back",
+    body: "Hi {name},\n\nWanted to bump this back up in case it got buried under everything else this week.\n\nHappy to send a short two-minute rundown if that's easier than a full read — just say the word.\n\nNo worries at all if now isn't the right time.",
   },
   {
     name: "Partnership Pitch",
     category: "Business",
-    subject: "Working together",
-    body: "Hi {name},\n\nI've been following {name}'s growth and I'm genuinely impressed by the direction you're taking.\n\nWe work with a small group of partners each quarter and I think there's a natural fit here. Would it make sense to explore it?\n\nGlad to share details whenever suits you.",
+    subject: "A partnership idea",
+    body: "Hi {name},\n\nI've been keeping an eye on what you're building for a while and like where it's headed.\n\nWe work closely with a small number of partners at a time, and I think there could be a real fit here. Open to a short conversation about what that would look like?\n\nAppreciate you taking the time to read this.",
   },
   {
     name: "Introduction",
     category: "Business",
     subject: "Introducing myself",
-    body: "Hi {name},\n\nWe're opening a small number of spots this month and I wanted you to have first look before we share it more widely.\n\nIf it's interesting, reply and I'll send the details across.\n\nAll the best.",
+    body: "Hi {name},\n\nI don't think we've spoken before, so I wanted to introduce myself directly rather than send something generic.\n\nI help stores like yours get more from the traffic they already have. If it'd be useful to trade a few ideas, I'd enjoy the conversation — and if not, no hard feelings.\n\nThanks for reading this far.",
   },
 ];
 
 /** Ready-made subject openers, matching the quick chips in the composer. */
 export const SUBJECT_CHIPS: { label: string; value: string }[] = [
-  { label: "Quick question", value: "Quick question" },
+  { label: "A quick note", value: "A quick note" },
   { label: "Working together", value: "Working together" },
-  { label: "Following up", value: "Following up" },
+  { label: "Circling back", value: "Circling back" },
 ];
 
 export const TONE_CHIPS: { label: string; value: string }[] = [
   {
     label: "Professional",
     value:
-      "Hi {name},\n\nI'm reaching out because I believe there's a strong fit between what you're building and what we do.\n\nWould you be open to a brief conversation this week?\n\nKind regards,",
+      "Hi {name},\n\nI'll keep this short — what we do could genuinely help with what you're building, and I wanted to reach out directly rather than through a generic list.\n\nWould a brief conversation this week make sense?\n\nKind regards,",
   },
   {
     label: "Casual",
     value:
-      "Hey {name},\n\nSaw what you're doing and had to reach out — really like it.\n\nGot a quick idea that might help. Worth a two-minute read?\n\nCheers,",
+      "Hey {name},\n\nSaw what you're doing and had to say — really like it.\n\nGot a quick idea that might help. Worth a two-minute read?\n\nCheers,",
   },
   {
     label: "Invitation",

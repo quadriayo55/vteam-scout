@@ -1,4 +1,4 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 /**
@@ -17,16 +17,35 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
  * message, so every link sits on the sending brand's own domain. The default
  * is the connected link domain; EMAIL_LINK_BASE can override it.
  */
-export const APP_URL = (
-  process.env["EMAIL_LINK_BASE"] || "https://link.verunda.com"
-).replace(/\/+$/, "");
+export const APP_URL = (process.env["EMAIL_LINK_BASE"] || "https://link.verunda.com").replace(
+  /\/+$/,
+  "",
+);
 
+// A hardcoded fallback here would let anyone compute a valid unsubscribe
+// token for any address (the source is not secret) and mass-suppress the
+// list. Without a configured secret, fall back to one generated fresh per
+// process instead: links signed before a restart stop verifying, which is
+// safer than a fallback an outsider can also compute.
+let generatedSecret: string | null = null;
 function secret(): string {
-  return process.env["UNSUBSCRIBE_SECRET"] ?? process.env["RESEND_WEBHOOK_SECRET"] ?? "verunda";
+  const configured = process.env["UNSUBSCRIBE_SECRET"] ?? process.env["RESEND_WEBHOOK_SECRET"];
+  if (configured) return configured;
+  if (!generatedSecret) {
+    console.error(
+      "[suppression] UNSUBSCRIBE_SECRET is not set — using a random per-process secret. " +
+        "Set UNSUBSCRIBE_SECRET (or RESEND_WEBHOOK_SECRET) in project secrets so unsubscribe links keep working across restarts.",
+    );
+    generatedSecret = randomBytes(32).toString("hex");
+  }
+  return generatedSecret;
 }
 
 export function unsubscribeToken(email: string): string {
-  return createHmac("sha256", secret()).update(email.trim().toLowerCase()).digest("hex").slice(0, 32);
+  return createHmac("sha256", secret())
+    .update(email.trim().toLowerCase())
+    .digest("hex")
+    .slice(0, 32);
 }
 
 export function checkUnsubscribeToken(email: string, token: string): boolean {
