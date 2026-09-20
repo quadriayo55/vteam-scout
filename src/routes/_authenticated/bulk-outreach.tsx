@@ -139,10 +139,9 @@ function BulkOutreachPage() {
   const [startWith, setStartWith] = useState(0);
   const [batchSize, setBatchSize] = useState(4);
   const [gapSeconds, setGapSeconds] = useState(15);
-  // The real ceiling is enforced server-side and ramps up automatically as the
-  // sending domain builds history (see claim_email_send_slot) — this is just the
-  // steady-state figure shown here; new domains are held well below it at first.
-  const [dailyCap] = useState(750);
+  // Flat cap, overriding the automatic warm-up ramp at the account owner's
+  // explicit request (see migration 0028). Enforced server-side in claim_email_send_slot.
+  const [dailyCap] = useState(5000);
   const [activeId, setActiveId] = useState<string | null>(null);
 
   const [parsing, setParsing] = useState(false);
@@ -1094,10 +1093,9 @@ function BulkOutreachPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="cap">Daily limit</Label>
-                <Input id="cap" type="number" min={1} max={750} value={dailyCap} readOnly />
+                <Input id="cap" type="number" min={1} max={5000} value={dailyCap} readOnly />
                 <p className="text-xs text-muted-foreground">
-                  Shared with follow-ups. Automatically held much lower than this while the
-                  sending domain is new, then ramps up weekly as it builds a clean history.
+                  Up to 5,000 emails a day, shared with follow-ups.
                 </p>
               </div>
             </div>
@@ -1310,8 +1308,7 @@ function BulkOutreachPage() {
                 )}
               </div>
               <p className="text-xs text-muted-foreground">
-                Pace and daily volume ramp up automatically as the sending domain builds a clean
-                history — see the Daily limit panel below for today's actual numbers.{" "}
+                Sending pace: one email every 15 seconds, up to 5,000 a day including follow-ups.{" "}
                 {running
                   ? "Sending is running on our servers — you can close the app or lock your phone and come back later."
                   : "Sending runs in the background, so this page does not need to stay open."}
