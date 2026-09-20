@@ -12,7 +12,7 @@ import { ReauthenticationEmail } from '@/lib/email-templates/reauthentication'
 const SITE_NAME = "Verunda Team Scoutier"
 const SENDER_DOMAIN = "notify.link.verunda.com"
 const ROOT_DOMAIN = "link.verunda.com"
-const FROM_DOMAIN = "link.verunda.com"
+const FROM_DOMAIN = SENDER_DOMAIN
 const SITE_URL = `https://${ROOT_DOMAIN}`
 
 // The SDK handler owns verification, dispatch, and retry semantics; this file
