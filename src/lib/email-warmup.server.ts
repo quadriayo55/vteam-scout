@@ -1,11 +1,11 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
-// Steady-state ceiling only. The real cap ramps up automatically week by week
-// as the sending domain builds history — see claim_email_send_slot, which is
-// the actual source of truth enforced on every send. This constant just bounds
+// Flat cap, overriding the automatic warm-up ramp at the account owner's
+// explicit request (see migration 0028). claim_email_send_slot is still the
+// actual source of truth enforced on every send; this constant just bounds
 // how big a single send's own daily_cap can be set.
-export const WARMUP_DAILY_LIMIT = 750;
-export const WARMUP_GAP_SECONDS = 30;
+export const WARMUP_DAILY_LIMIT = 5000;
+export const WARMUP_GAP_SECONDS = 15;
 
 type SendSlot = {
   allowed: boolean;
