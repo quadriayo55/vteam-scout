@@ -9,8 +9,11 @@ export type EmailSettings = {
   reply_to: string | null;
 };
 
+// Matches the sender identity already proven to land in the inbox and draw real
+// replies: send as support@ (the recipient-facing name), collect replies at the
+// personal quadri@ address so they land somewhere that's actually read.
 export const DEFAULT_EMAIL_SETTINGS: EmailSettings = {
-  from_local: "quadri",
+  from_local: "support",
   from_domain: "verunda.com",
   from_name: "Quadri from Verunda",
   reply_to: "quadri@verunda.com",
