@@ -1,12 +1,17 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
-export const WARMUP_DAILY_LIMIT = 1000;
-export const WARMUP_GAP_SECONDS = 15;
+// Steady-state ceiling only. The real cap ramps up automatically week by week
+// as the sending domain builds history — see claim_email_send_slot, which is
+// the actual source of truth enforced on every send. This constant just bounds
+// how big a single send's own daily_cap can be set.
+export const WARMUP_DAILY_LIMIT = 750;
+export const WARMUP_GAP_SECONDS = 30;
 
 type SendSlot = {
   allowed: boolean;
   reason: "ready" | "pacing" | "daily_limit";
   sentToday: number;
+  dailyCap: number;
   retryAt: string;
 };
 
@@ -26,6 +31,7 @@ export async function claimEmailSendSlot(userId: string): Promise<SendSlot> {
     allowed: value.allowed === true,
     reason: value.reason === "daily_limit" || value.reason === "pacing" ? value.reason : "ready",
     sentToday: Number(value.sentToday ?? 0),
+    dailyCap: Number(value.dailyCap ?? WARMUP_DAILY_LIMIT),
     retryAt: String(value.retryAt ?? new Date().toISOString()),
   };
 }

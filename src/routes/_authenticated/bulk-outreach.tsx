@@ -139,7 +139,10 @@ function BulkOutreachPage() {
   const [startWith, setStartWith] = useState(0);
   const [batchSize, setBatchSize] = useState(4);
   const [gapSeconds, setGapSeconds] = useState(15);
-  const [dailyCap] = useState(5000);
+  // The real ceiling is enforced server-side and ramps up automatically as the
+  // sending domain builds history (see claim_email_send_slot) — this is just the
+  // steady-state figure shown here; new domains are held well below it at first.
+  const [dailyCap] = useState(750);
   const [activeId, setActiveId] = useState<string | null>(null);
 
   const [parsing, setParsing] = useState(false);
@@ -1037,9 +1040,10 @@ function BulkOutreachPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="cap">Daily limit</Label>
-                <Input id="cap" type="number" min={1} max={5000} value={dailyCap} readOnly />
+                <Input id="cap" type="number" min={1} max={750} value={dailyCap} readOnly />
                 <p className="text-xs text-muted-foreground">
-                  Up to 5,000 emails a day, shared with follow-ups.
+                  Shared with follow-ups. Automatically held much lower than this while the
+                  sending domain is new, then ramps up weekly as it builds a clean history.
                 </p>
               </div>
             </div>
