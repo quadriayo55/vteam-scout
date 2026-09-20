@@ -57,6 +57,7 @@ import {
   Plus,
   RotateCcw,
   Shuffle,
+  Pencil,
 } from "lucide-react";
 import { RoleGate } from "@/components/RoleGate";
 
@@ -150,6 +151,7 @@ function BulkOutreachPage() {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [testTo, setTestTo] = useState("");
   const [newTemplate, setNewTemplate] = useState(false);
+  const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
   const [templateName, setTemplateName] = useState("");
   const [templateCategory, setTemplateCategory] = useState<string>(TEMPLATE_CATEGORIES[0]);
   const [templateSubject, setTemplateSubject] = useState("");
@@ -555,26 +557,64 @@ function BulkOutreachPage() {
       if (!templateName.trim()) throw new Error("Give the template a name.");
       if (!templateSubject.trim()) throw new Error("Add a subject line for the template.");
       if (!templateBody.trim()) throw new Error("Add a message for the template.");
-      const { error } = await supabase.from("email_templates").insert({
-        user_id: user.id,
+      const row = {
         name: templateName.trim(),
         category: templateCategory,
         subject: templateSubject.trim(),
         body: templateBody.trim(),
-      });
-      if (error) throw error;
+      };
+      if (editingTemplateId) {
+        const { error } = await supabase
+          .from("email_templates")
+          .update(row)
+          .eq("id", editingTemplateId);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("email_templates")
+          .insert({ ...row, user_id: user.id });
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
+      const wasEditing = editingTemplateId !== null;
       setNewTemplate(false);
+      setEditingTemplateId(null);
       setTemplateName("");
       setTemplateSubject("");
       setTemplateBody("");
       void templates.refetch();
-      toast.success("Template saved.");
+      toast.success(wasEditing ? "Template updated." : "Template saved.");
     },
     onError: (error) =>
       toast.error(error instanceof Error ? error.message : "That template could not be saved."),
   });
+
+  function startEditingTemplate(item: TemplateRow) {
+    setEditingTemplateId(item.id);
+    setTemplateName(item.name);
+    setTemplateCategory(item.category);
+    setTemplateSubject(item.subject);
+    setTemplateBody(item.body);
+    setNewTemplate(true);
+  }
+
+  function openNewTemplateForm() {
+    setEditingTemplateId(null);
+    setTemplateName("");
+    setTemplateCategory(TEMPLATE_CATEGORIES[0]);
+    setTemplateSubject("");
+    setTemplateBody("");
+    setNewTemplate(true);
+  }
+
+  function closeTemplateForm() {
+    setNewTemplate(false);
+    setEditingTemplateId(null);
+    setTemplateName("");
+    setTemplateSubject("");
+    setTemplateBody("");
+  }
 
   const removeTemplate = useMutation({
     mutationFn: async (id: string) => {
@@ -1118,7 +1158,11 @@ function BulkOutreachPage() {
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h2 className="font-display text-lg font-bold">Smart templates</h2>
               <div className="flex gap-2">
-                <Button size="sm" variant="outline" onClick={() => setNewTemplate((v) => !v)}>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => (newTemplate ? closeTemplateForm() : openNewTemplateForm())}
+                >
                   <Plus className="mr-1.5 size-3.5" /> Add template
                 </Button>
                 <Button
@@ -1134,6 +1178,9 @@ function BulkOutreachPage() {
 
             {newTemplate && (
               <div className="space-y-2 rounded-xl border border-border bg-surface/40 p-3">
+                <p className="text-xs font-semibold text-muted-foreground">
+                  {editingTemplateId ? "Editing template" : "New template"}
+                </p>
                 <Input
                   value={templateName}
                   onChange={(event) => setTemplateName(event.target.value)}
@@ -1160,30 +1207,41 @@ function BulkOutreachPage() {
                   rows={7}
                   placeholder="Write the message for this template. Use {name} where the contact's name should appear."
                 />
+                <SpamHint
+                  level={spamCheck(`${templateSubject} ${templateBody}`).level}
+                  hits={spamCheck(`${templateSubject} ${templateBody}`).hits}
+                />
                 <div className="flex flex-wrap gap-2">
                   <Button
                     size="sm"
                     onClick={() => saveTemplate.mutate()}
                     disabled={saveTemplate.isPending}
                   >
-                    Save template
+                    {editingTemplateId ? "Update template" : "Save template"}
                   </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      setTemplateSubject(current.subject);
-                      setTemplateBody(current.body);
-                    }}
-                  >
-                    Copy from message {activeMessage + 1}
+                  {!editingTemplateId && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setTemplateSubject(current.subject);
+                        setTemplateBody(current.body);
+                      }}
+                    >
+                      Copy from message {activeMessage + 1}
+                    </Button>
+                  )}
+                  <Button size="sm" variant="ghost" onClick={closeTemplateForm}>
+                    Cancel
                   </Button>
                 </div>
               </div>
             )}
 
             <ul className="space-y-2">
-              {shownTemplates.map((item) => (
+              {shownTemplates.map((item) => {
+                const templateSpam = spamCheck(`${item.subject} ${item.body}`);
+                return (
                 <li
                   key={item.id}
                   className="rounded-xl border border-border bg-surface/50 p-3 text-sm"
@@ -1193,6 +1251,9 @@ function BulkOutreachPage() {
                     <span className="text-xs font-semibold text-brand">{item.category}</span>
                   </div>
                   <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{item.body}</p>
+                  <div className="mt-1.5">
+                    <SpamHint level={templateSpam.level} hits={templateSpam.hits} />
+                  </div>
                   <div className="mt-2 flex gap-2">
                     <Button
                       size="sm"
@@ -1205,17 +1266,27 @@ function BulkOutreachPage() {
                       Use template
                     </Button>
                     {!item.id.startsWith("starter-") && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => removeTemplate.mutate(item.id)}
-                      >
-                        <Trash2 className="size-3.5" />
-                      </Button>
+                      <>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => startEditingTemplate(item)}
+                        >
+                          <Pencil className="size-3.5" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => removeTemplate.mutate(item.id)}
+                        >
+                          <Trash2 className="size-3.5" />
+                        </Button>
+                      </>
                     )}
                   </div>
                 </li>
-              ))}
+                );
+              })}
             </ul>
           </section>
         </div>
