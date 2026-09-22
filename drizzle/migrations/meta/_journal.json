@@ -183,6 +183,13 @@
       "when": 1789823309336,
       "tag": "0025_campaign_email_totals",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1790044981324,
+      "tag": "0026_speed_up_bulk_sends_and_delete",
+      "breakpoints": true
     }
   ]
 }
