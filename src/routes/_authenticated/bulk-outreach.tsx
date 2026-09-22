@@ -533,13 +533,11 @@ function BulkOutreachPage() {
 
   const removeSend = useMutation({
     mutationFn: async (id: string) => {
-      const { error: rowsError } = await supabase
-        .from("bulk_send_recipients")
-        .delete()
-        .eq("send_id", id);
-      if (rowsError) throw rowsError;
-      const { error } = await supabase.from("bulk_sends").delete().eq("id", id);
+      // Stop it first so a background batch cannot keep writing to rows we remove.
+      await supabase.from("bulk_sends").update({ status: "paused" }).eq("id", id);
+      const { data, error } = await supabase.rpc("delete_bulk_send", { _send_id: id });
       if (error) throw error;
+      if (data === false) throw new Error("That send no longer exists.");
       return id;
     },
     onSuccess: (id) => {
