@@ -117,8 +117,22 @@ export async function runBulkBatch(sendId: string): Promise<BatchOutcome> {
     const errors: string[] = [];
     const queue = recipients ?? [];
     const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+    // Keep a run comfortably inside the request budget; leftovers go back to the queue
+    // and the next heartbeat picks them up straight away.
+    const deadline = Date.now() + 50_000;
+    const requeue = async (ids: string[]) => {
+      if (ids.length === 0) return;
+      await supabaseAdmin
+        .from("bulk_send_recipients")
+        .update({ status: "pending", claimed_at: null })
+        .in("id", ids);
+    };
 
     for (const [index, recipient] of queue.entries()) {
+      if (Date.now() > deadline) {
+        await requeue(queue.slice(index).map((row) => row.id));
+        break;
+      }
       // Wait for this message's turn at the shared pacing gate.
       let slot = await claimEmailSendSlot(send.user_id);
       if (!slot.allowed && slot.reason === "pacing") {

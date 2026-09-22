@@ -533,13 +533,11 @@ function BulkOutreachPage() {
 
   const removeSend = useMutation({
     mutationFn: async (id: string) => {
-      const { error: rowsError } = await supabase
-        .from("bulk_send_recipients")
-        .delete()
-        .eq("send_id", id);
-      if (rowsError) throw rowsError;
-      const { error } = await supabase.from("bulk_sends").delete().eq("id", id);
+      // Stop it first so a background batch cannot keep writing to rows we remove.
+      await supabase.from("bulk_sends").update({ status: "paused" }).eq("id", id);
+      const { data, error } = await supabase.rpc("delete_bulk_send", { _send_id: id });
       if (error) throw error;
+      if (data === false) throw new Error("That send no longer exists.");
       return id;
     },
     onSuccess: (id) => {
@@ -1128,7 +1126,7 @@ function BulkOutreachPage() {
                   }
                 />
                 <p className="text-xs text-muted-foreground">
-                  At least 15 seconds between messages — up to 240 emails an hour.
+                  At least 6 seconds between messages — up to 600 emails an hour.
                 </p>
               </div>
               <div className="space-y-2">
@@ -1379,7 +1377,7 @@ function BulkOutreachPage() {
                 )}
               </div>
               <p className="text-xs text-muted-foreground">
-                Sending pace: one email every 15 seconds, up to 5,000 a day including follow-ups.{" "}
+                Sending pace: one email every 6 seconds, up to 5,000 a day including follow-ups.{" "}
                 {running
                   ? "Sending is running on our servers — you can close the app or lock your phone and come back later."
                   : "Sending runs in the background, so this page does not need to stay open."}

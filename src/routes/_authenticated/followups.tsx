@@ -488,7 +488,7 @@ function FollowupsPage() {
           </div>
           <p className="text-xs text-muted-foreground">
             Follow-ups share the 5,000-email daily limit with Bulk Outreach. The gap can’t go below
-            15 seconds — that keeps the shared sending pace safe.
+            6 seconds — that keeps the shared sending pace safe.
           </p>
         </div>
 

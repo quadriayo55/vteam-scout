@@ -1081,6 +1081,7 @@ export type Database = {
         }[]
       }
       claim_email_send_slot: { Args: { _user_id: string }; Returns: Json }
+      delete_bulk_send: { Args: { _send_id: string }; Returns: boolean }
       email_sent_daily: {
         Args: { _days?: number; _user_id?: string }
         Returns: {
