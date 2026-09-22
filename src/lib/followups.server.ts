@@ -98,9 +98,12 @@ export async function runDueFollowups(): Promise<RunSummary> {
     const already = new Set((done ?? []).map((row) => row.recipient_id));
 
     const queue = (recipients ?? []).filter((row) => !already.has(row.id));
-    // The shared pacing gate permits one outreach message at a time across
-    // bulk sends and every active follow-up sequence.
-    const batch = queue.slice(0, 1);
+    // Honour the batch size chosen for this sequence; the shared pacing gate still
+    // spaces out each individual message.
+    const size = Math.max(1, Math.min(sequence.batch_size || 1, 100));
+    const batch = queue.slice(0, size);
+    const deadline = Date.now() + 40_000;
+    const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
     let sent = 0;
     let failed = 0;
@@ -108,6 +111,7 @@ export async function runDueFollowups(): Promise<RunSummary> {
     let processed = 0;
 
     for (const [offset, recipient] of batch.entries()) {
+      if (Date.now() > deadline) break;
       const index = already.size + offset;
 
       const excluded =
