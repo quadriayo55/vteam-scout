@@ -216,7 +216,7 @@ export async function runBulkBatch(sendId: string): Promise<BatchOutcome> {
       sent,
       failed,
       remaining,
-      capReached: false,
+      capReached,
       status,
       errors,
       stopped: remaining === 0 || wasStopped,
