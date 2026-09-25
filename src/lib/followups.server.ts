@@ -137,11 +137,24 @@ export async function runDueFollowups(): Promise<RunSummary> {
         continue;
       }
 
-      const slot = await claimEmailSendSlot(step.user_id);
+      // The first recipient reserves the shared pacing slot. For the rest of the
+      // configured batch, wait for that slot instead of abandoning the batch and
+      // leaving it for the next five-minute scheduler tick.
+      let slot = await claimEmailSendSlot(step.user_id);
+      if (!slot.allowed && slot.reason === "pacing") {
+        const waitMs = Math.max(
+          0,
+          Math.min(new Date(slot.retryAt).getTime() - Date.now() + 250, 20000),
+        );
+        if (Date.now() + waitMs > deadline) break;
+        await sleep(waitMs);
+        slot = await claimEmailSendSlot(step.user_id);
+      }
       if (!slot.allowed) break;
 
       const pick = variantIndex(index, variants.length, step.rotation, step.rotation_size);
-      const variant = variants[pick]!;
+      const variant = variants[pick];
+      if (!variant) break;
       const result = await sendOneEmail({
         fromName: send.from_name,
         fromEmail: send.from_email,
